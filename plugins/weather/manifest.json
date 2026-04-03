@@ -1,0 +1,42 @@
+{
+  "pluginId": "weather",
+  "pluginName": "Weather Dashboard",
+  "description": "Look up current weather conditions and a 5-day forecast for any location worldwide.",
+  "version": "1.0.0",
+  "author": "ChatBridge",
+  "category": "external-public",
+  "contentRating": "safe",
+  "tools": [
+    {
+      "toolName": "lookup_weather",
+      "toolDescription": "Look up the current weather and 5-day forecast for a location. Returns temperature, conditions, wind, humidity, and daily forecasts.",
+      "parameters": [
+        {
+          "parameterName": "location",
+          "parameterType": "string",
+          "parameterDescription": "City name or location to look up weather for (e.g., 'Austin, Texas' or 'London, UK')",
+          "isRequired": true
+        }
+      ]
+    }
+  ],
+  "bundle": {
+    "bundleUrl": "https://chatbox-plugins.pages.dev/weather/bundle.zip",
+    "bundleVersion": "1.0.0",
+    "bundleHash": "PLACEHOLDER_COMPUTE_AFTER_BUILD",
+    "entryFile": "index.html"
+  },
+  "userInterface": {
+    "defaultWidth": 380,
+    "defaultHeight": 450,
+    "sandboxPermissions": [],
+    "isPersistent": false
+  },
+  "authentication": { "type": "none" },
+  "contextPrompt": "This is a weather dashboard. When the user asks about weather, use the lookup_weather tool with their location. The tool returns structured data including current conditions and a forecast. Present the information conversationally and offer to help with weather-related questions like what to wear or whether outdoor activities are advisable.",
+  "capabilities": {
+    "supportsScreenshot": false,
+    "supportsVerboseState": false,
+    "supportsEventLog": false
+  }
+}

@@ -227,5 +227,8 @@ export type FileMeta = {
 }
 
 export * from './types/image-generation'
+export * from './types/plugin'
+export * from './types/plugin-protocol'
+export * from './types/plugin-events'
 export * from './types/session'
 export * from './types/settings'

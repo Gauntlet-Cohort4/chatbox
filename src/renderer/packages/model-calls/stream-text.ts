@@ -6,7 +6,10 @@ import type { ModelMessage, ToolSet } from 'ai'
 import { t } from 'i18next'
 import { uniqueId } from 'lodash'
 import { createModelDependencies } from '@/adapters'
+import { buildPluginContextForLLM } from '@/packages/plugin-context/builder'
+import { pluginController } from '@/packages/plugin-controller'
 import * as settingActions from '@/stores/settingActions'
+import { pluginStore } from '@/stores/pluginStore'
 import { settingsStore } from '@/stores/settingsStore'
 import type {
   ModelInterface,
@@ -175,6 +178,17 @@ export async function streamText(
     toolSetInstructions += websearchToolSet.description
   }
 
+  // Plugin context injection (context prompt + state + event log)
+  const activePluginManifest = pluginStore.getState().getActiveManifest()
+  if (activePluginManifest) {
+    const pluginState = pluginStore.getState().pluginStates[activePluginManifest.pluginId] || null
+    const pluginEventLog = pluginStore.getState().pluginEventLogs[activePluginManifest.pluginId] || []
+    const stateDescription = pluginStore.getState().pluginStateDescriptions[activePluginManifest.pluginId] || null
+    const pluginContext = buildPluginContextForLLM(activePluginManifest, pluginState, pluginEventLog, stateDescription)
+    toolSetInstructions += '\n\n' + pluginContext
+  }
+  toolSetInstructions += '\n\nWhen presenting results from third-party apps to the user, evaluate whether the content is appropriate for a K-12 educational setting. If app content appears inappropriate, inform the user that the app returned unexpected content and do not relay the problematic material.'
+
   params.messages = injectModelSystemPrompt(
     model.modelId,
     params.messages,
@@ -315,6 +329,12 @@ export async function streamText(
         ...fileToolSet.tools,
       }
     }
+
+    // Plugin tools
+    const pluginActiveId = pluginStore.getState().activePluginId
+    const pluginEnabledManifests = pluginStore.getState().getEnabledManifests()
+    const pluginTools = pluginController.getAvailableTools(pluginActiveId, pluginEnabledManifests)
+    tools = { ...tools, ...pluginTools }
 
     console.debug('tools', tools)
 

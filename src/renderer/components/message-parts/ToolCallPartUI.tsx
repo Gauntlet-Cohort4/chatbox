@@ -16,6 +16,7 @@ import {
   IconLoader,
   IconTerminal,
   IconWorld,
+  IconPuzzle,
   IconX,
 } from '@tabler/icons-react'
 import clsx from 'clsx'
@@ -45,7 +46,12 @@ const toolIconMap: Record<string, React.ElementType> = {
   read_file: IconFile,
 }
 
-const getToolIcon = (toolName: string) => toolIconMap[toolName] || IconCode
+const getToolIcon = (toolName: string) => {
+  if (toolName.startsWith('plugin__')) {
+    return IconPuzzle
+  }
+  return toolIconMap[toolName] || IconCode
+}
 
 // ─── Pill Header (shared) ───────────────────────────────────────────
 

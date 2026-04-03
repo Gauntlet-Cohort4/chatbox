@@ -9,6 +9,7 @@ import MessageList, { type MessageListRef } from '@/components/chat/MessageList'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import InputBox from '@/components/InputBox/InputBox'
 import Header from '@/components/layout/Header'
+import { PluginSidePanel } from '@/components/plugin/PluginSidePanel'
 import ThreadHistoryDrawer from '@/components/session/ThreadHistoryDrawer'
 import * as remote from '@/packages/remote'
 import { updateSession as updateSessionStore, useSession } from '@/stores/chatStore'
@@ -166,29 +167,32 @@ function RouteComponent() {
   }, [currentSession?.settings?.provider, currentSession?.settings?.modelId])
 
   return currentSession ? (
-    <div className="flex flex-col h-full">
-      <Header session={currentSession} />
+    <div className="flex h-full">
+      <div className="flex flex-col flex-1 min-w-0">
+        <Header session={currentSession} />
 
-      {/* MessageList 设置 key，确保每个 session 对应新的 MessageList 实例 */}
-      <MessageList ref={messageListRef} key={`message-list${currentSessionId}`} currentSession={currentSession} />
+        {/* MessageList 设置 key，确保每个 session 对应新的 MessageList 实例 */}
+        <MessageList ref={messageListRef} key={`message-list${currentSessionId}`} currentSession={currentSession} />
 
-      {/* <ScrollButtons /> */}
-      <ErrorBoundary name="session-inputbox">
-        <InputBox
-          key={`input-box${currentSession.id}`}
-          sessionId={currentSession.id}
-          sessionType={currentSession.type}
-          model={model}
-          onStartNewThread={onStartNewThread}
-          onRollbackThread={onRollbackThread}
-          onSelectModel={onSelectModel}
-          onClickSessionSettings={onClickSessionSettings}
-          generating={!!lastGeneratingMessage}
-          onSubmit={onSubmit}
-          onStopGenerating={onStopGenerating}
-        />
-      </ErrorBoundary>
-      <ThreadHistoryDrawer session={currentSession} />
+        {/* <ScrollButtons /> */}
+        <ErrorBoundary name="session-inputbox">
+          <InputBox
+            key={`input-box${currentSession.id}`}
+            sessionId={currentSession.id}
+            sessionType={currentSession.type}
+            model={model}
+            onStartNewThread={onStartNewThread}
+            onRollbackThread={onRollbackThread}
+            onSelectModel={onSelectModel}
+            onClickSessionSettings={onClickSessionSettings}
+            generating={!!lastGeneratingMessage}
+            onSubmit={onSubmit}
+            onStopGenerating={onStopGenerating}
+          />
+        </ErrorBoundary>
+        <ThreadHistoryDrawer session={currentSession} />
+      </div>
+      <PluginSidePanel />
     </div>
   ) : (
     !isFetching && (
