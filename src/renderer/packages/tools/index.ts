@@ -17,5 +17,14 @@ export function getToolName(toolName: string): string {
     parse_link: t('Parse Link'),
   }
 
+  if (toolName.startsWith('plugin__')) {
+    const parts = toolName.split('__')
+    if (parts.length >= 3) {
+      const pluginName = parts[1]
+      const action = parts.slice(2).join(' ').replace(/_/g, ' ')
+      return `${pluginName}: ${action}`
+    }
+  }
+
   return toolNames[toolName] || toolName
 }
