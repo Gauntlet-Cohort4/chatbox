@@ -1,6 +1,6 @@
 import { ActionIcon, Loader, Paper, Text } from '@mantine/core'
 import { IconX, IconAlertTriangle } from '@tabler/icons-react'
-import { type FC, useCallback, useEffect, useRef, useState } from 'react'
+import { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ensureBundle } from '@/packages/plugin-catalog/bundle-manager'
 import { PluginBridge } from '@/packages/plugin-bridge'
@@ -13,7 +13,11 @@ const READY_TIMEOUT_MS = 15000
 export const PluginSidePanel: FC = () => {
 	const { t } = useTranslation()
 	const activePluginId = usePluginStore((s) => s.activePluginId)
-	const manifest = usePluginStore((s) => s.getActiveManifest())
+	const catalog = usePluginStore((s) => s.catalog)
+	const manifest = useMemo(
+		() => catalog?.applications.find((app) => app.pluginId === activePluginId) ?? null,
+		[catalog, activePluginId]
+	)
 	const iframeRef = useRef<HTMLIFrameElement>(null)
 	const bridgeRef = useRef<PluginBridge | null>(null)
 
