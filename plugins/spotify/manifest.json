@@ -1,0 +1,84 @@
+{
+  "pluginId": "spotify",
+  "pluginName": "Spotify Playlist Creator",
+  "description": "Search for songs and create playlists on your Spotify account. Requires Spotify authorization.",
+  "version": "1.0.0",
+  "author": "ChatBridge",
+  "category": "external-authenticated",
+  "contentRating": "general",
+  "tools": [
+    {
+      "toolName": "search_tracks",
+      "toolDescription": "Search Spotify for tracks by name, artist, or keywords. Returns up to 10 matching tracks with details.",
+      "parameters": [
+        {
+          "parameterName": "query",
+          "parameterType": "string",
+          "parameterDescription": "Search query for finding tracks (e.g., 'lo-fi study beats' or 'Beethoven symphony')",
+          "isRequired": true
+        }
+      ]
+    },
+    {
+      "toolName": "create_playlist",
+      "toolDescription": "Create a new playlist on the user's Spotify account.",
+      "parameters": [
+        {
+          "parameterName": "playlistName",
+          "parameterType": "string",
+          "parameterDescription": "Name for the new playlist",
+          "isRequired": true
+        },
+        {
+          "parameterName": "description",
+          "parameterType": "string",
+          "parameterDescription": "Optional description for the playlist",
+          "isRequired": false
+        }
+      ]
+    },
+    {
+      "toolName": "add_to_playlist",
+      "toolDescription": "Add tracks to an existing playlist by their track IDs.",
+      "parameters": [
+        {
+          "parameterName": "playlistId",
+          "parameterType": "string",
+          "parameterDescription": "The Spotify playlist ID to add tracks to",
+          "isRequired": true
+        },
+        {
+          "parameterName": "trackIds",
+          "parameterType": "object",
+          "parameterDescription": "Array of Spotify track IDs to add to the playlist",
+          "isRequired": true
+        }
+      ]
+    }
+  ],
+  "bundle": {
+    "bundleUrl": "https://chatbox-plugins.pages.dev/spotify/bundle.zip",
+    "bundleVersion": "1.0.0",
+    "bundleHash": "PLACEHOLDER_COMPUTE_AFTER_BUILD",
+    "entryFile": "index.html"
+  },
+  "userInterface": {
+    "defaultWidth": 400,
+    "defaultHeight": 550,
+    "sandboxPermissions": [],
+    "isPersistent": true
+  },
+  "authentication": {
+    "type": "oauth2-pkce",
+    "authorizationUrl": "https://accounts.spotify.com/authorize",
+    "tokenUrl": "https://accounts.spotify.com/api/token",
+    "scopes": ["playlist-modify-public", "playlist-modify-private", "user-read-private"],
+    "clientId": "PLACEHOLDER_REGISTER_SPOTIFY_APP"
+  },
+  "contextPrompt": "This is a Spotify playlist creator. The user can search for songs, build a playlist, and save it to their Spotify account. Help them find music that fits their mood or purpose. If they ask for recommendations, suggest search queries. When they are done building their playlist, encourage them to create it.",
+  "capabilities": {
+    "supportsScreenshot": false,
+    "supportsVerboseState": true,
+    "supportsEventLog": true
+  }
+}
