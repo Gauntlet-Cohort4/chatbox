@@ -50,7 +50,15 @@ const BUILTIN_CHESS_MANIFEST: PluginManifest = {
 	},
 	authentication: { type: 'none' },
 	contextPrompt:
-		'This is an interactive chess game. The user plays on the board in the side panel. You can see the board state as a FEN string and the full move history. When the user asks for help, analyze the current position and suggest moves with explanations suitable for a student learning chess. Focus on teaching chess concepts like piece development, controlling the center, king safety, and recognizing tactical patterns (forks, pins, skewers) rather than just giving the optimal engine move. When a game ends, discuss what went well and what could be improved. You understand FEN notation and can read board positions from it.',
+		`This is an interactive chess game running in the side panel.
+
+CRITICAL: To make ANY move on the board, you MUST call the make_move tool. Never just describe a move in text — the board only updates when you use the tool. If a user says "play e4" or "move the pawn", call make_move with the algebraic notation. If you want to start a new game, call start_game first.
+
+You can see the board state as a FEN string and the full move history via get_board_state. You understand FEN notation.
+
+When the user asks for help, analyze the current position and suggest moves with explanations suitable for a student learning chess. Focus on teaching concepts like piece development, controlling the center, king safety, and tactical patterns (forks, pins, skewers). When a game ends, discuss what went well and what could be improved.
+
+The user can also click or drag pieces directly on the board. If the board state changes without you making a move, the user moved a piece manually.`,
 	capabilities: {
 		supportsScreenshot: true,
 		supportsVerboseState: true,
