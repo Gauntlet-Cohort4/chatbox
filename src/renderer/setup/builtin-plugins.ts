@@ -125,7 +125,7 @@ const BUILTIN_MANIFESTS: PluginManifest[] = [BUILTIN_CHESS_MANIFEST, UNHINGED_MA
 async function fetchBuiltinPluginHtml(pluginId: string): Promise<string | null> {
 	try {
 		// Try fetching from a relative path (works in dev and web)
-		const response = await fetch(`./plugins/${pluginId}/index.html`)
+		const response = await fetch(`/plugins/${pluginId}/index.html`)
 		if (response.ok) {
 			return await response.text()
 		}
