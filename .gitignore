@@ -187,4 +187,4 @@ node-compile-cache/
 storybook-static
 .gstack/
 .worktrees/
-.claude/worktrees/
+.claude/
