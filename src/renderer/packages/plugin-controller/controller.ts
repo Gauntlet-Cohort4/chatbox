@@ -117,9 +117,19 @@ export function createPluginController(eventBus: Emittery<PluginEventMap> = plug
 							return new Promise((resolve, reject) => {
 								const timeoutHandle = setTimeout(() => {
 									pendingToolCalls.delete(callId)
-									reject(new Error(`Tool call timed out after ${TOOL_TIMEOUT_MS / 1000} seconds`))
+									// Return timeout as result instead of throwing
+									resolve({ error: `Tool call timed out after ${TOOL_TIMEOUT_MS / 1000} seconds` })
 								}, TOOL_TIMEOUT_MS)
-								pendingToolCalls.set(callId, { resolve, reject, timeoutHandle })
+								pendingToolCalls.set(callId, {
+									resolve,
+									reject: (err: Error) => {
+										// Return errors as results so LLM sees them
+										clearTimeout(timeoutHandle)
+										pendingToolCalls.delete(callId)
+										resolve({ error: err.message })
+									},
+									timeoutHandle,
+								})
 								eventBus.emit('tool:invoke-request', {
 									pluginId: manifest.pluginId,
 									callId,
