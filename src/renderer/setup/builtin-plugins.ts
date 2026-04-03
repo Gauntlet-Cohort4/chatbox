@@ -58,7 +58,56 @@ const BUILTIN_CHESS_MANIFEST: PluginManifest = {
 	},
 }
 
-const BUILTIN_MANIFESTS: PluginManifest[] = [BUILTIN_CHESS_MANIFEST]
+const UNHINGED_MATH_MANIFEST: PluginManifest = {
+	pluginId: 'unhinged-math',
+	pluginName: 'Unhinged Math',
+	description:
+		'A chaotic math tutor that teaches algebra, geometry, and calculus through absurd word problems and over-the-top reactions. Makes math memorable by being wildly enthusiastic about numbers.',
+	version: '0.9.0',
+	author: 'MathChaos Labs',
+	category: 'external-public',
+	contentRating: 'educational',
+	tools: [
+		{
+			toolName: 'generate_problem',
+			toolDescription: 'Generate a wild math problem at the specified difficulty level.',
+			parameters: [
+				{ parameterName: 'topic', parameterType: 'string', parameterDescription: 'Math topic (algebra, geometry, calculus)', isRequired: true },
+				{ parameterName: 'difficulty', parameterType: 'string', parameterDescription: 'easy, medium, or hard', isRequired: false },
+			],
+		},
+		{
+			toolName: 'check_answer',
+			toolDescription: 'Check if the student answer is correct and provide dramatic feedback.',
+			parameters: [
+				{ parameterName: 'problemId', parameterType: 'string', parameterDescription: 'The problem ID to check', isRequired: true },
+				{ parameterName: 'answer', parameterType: 'string', parameterDescription: 'The student answer', isRequired: true },
+			],
+		},
+	],
+	bundle: {
+		bundleUrl: 'builtin://unhinged-math',
+		bundleVersion: '0.9.0',
+		bundleHash: 'mock',
+		entryFile: 'index.html',
+	},
+	userInterface: {
+		defaultWidth: 400,
+		defaultHeight: 500,
+		sandboxPermissions: [],
+		isPersistent: true,
+	},
+	authentication: { type: 'none' },
+	contextPrompt:
+		'This is Unhinged Math — a chaotic but educational math tutor. Generate absurd word problems and give over-the-top reactions to answers.',
+	capabilities: {
+		supportsScreenshot: false,
+		supportsVerboseState: true,
+		supportsEventLog: false,
+	},
+}
+
+const BUILTIN_MANIFESTS: PluginManifest[] = [BUILTIN_CHESS_MANIFEST, UNHINGED_MATH_MANIFEST]
 
 /**
  * Fetches a built-in plugin's HTML content.
@@ -126,10 +175,15 @@ export async function registerBuiltinPlugins(): Promise<void> {
 		}
 	}
 
-	// Auto-enable built-in plugins
+	// Set default approval status for built-in plugins
+	// Chess ships as deployed, others start as not-approved
 	for (const manifest of BUILTIN_MANIFESTS) {
-		if (!store.enabledPluginIds.includes(manifest.pluginId)) {
-			store.enablePlugin(manifest.pluginId)
+		const currentStatus = store.pluginApprovalStatus[manifest.pluginId]
+		if (!currentStatus) {
+			if (manifest.pluginId === 'chess') {
+				store.setApprovalStatus('chess', 'deployed')
+			}
+			// Other built-in plugins default to 'not-approved' (no action needed, that's the default)
 		}
 	}
 }
