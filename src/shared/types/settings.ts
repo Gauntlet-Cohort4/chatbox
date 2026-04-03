@@ -268,6 +268,17 @@ const MCPSettingsSchema = z.object({
   enabledBuiltinServers: z.array(z.string()),
 })
 
+const PluginSettingsSchema = z.object({
+  catalogUrl: z.string().url().optional(),
+  pollIntervalMs: z.number().default(60000),
+  enabledPluginIds: z.array(z.string()).default([]),
+  pluginTokens: z.record(z.string(), z.object({
+    accessToken: z.string(),
+    refreshToken: z.string().optional(),
+    expiresAt: z.number().optional(),
+  })).default({}),
+})
+
 export enum Theme {
   Dark,
   Light,
@@ -393,6 +404,7 @@ export const SettingsSchema = GlobalSessionSettingsSchema.extend({
 
   extension: ExtensionSettingsSchema,
   mcp: MCPSettingsSchema,
+  plugins: PluginSettingsSchema,
   skills: SkillSettingsSchema.catch({
     enabledSkillNames: [],
     translationEnabled: true,
@@ -424,6 +436,7 @@ export type ExtensionSettings = z.infer<typeof ExtensionSettingsSchema>
 export type MCPTransportConfig = z.infer<typeof MCPTransportConfigSchema>
 export type MCPServerConfig = z.infer<typeof MCPServerConfigSchema>
 export type MCPSettings = z.infer<typeof MCPSettingsSchema>
+export type PluginSettings = z.infer<typeof PluginSettingsSchema>
 
 // Re-export SkillSettings for convenience
 export type { SkillSettings } from './skills'
