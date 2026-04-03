@@ -144,6 +144,11 @@ export function settings(): Settings {
       servers: [],
       enabledBuiltinServers: [],
     },
+    plugins: {
+      pollIntervalMs: 60000,
+      enabledPluginIds: [],
+      pluginTokens: {},
+    },
     skills: {
       enabledSkillNames: [],
       translationEnabled: true,

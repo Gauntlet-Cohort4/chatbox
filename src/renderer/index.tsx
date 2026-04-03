@@ -71,6 +71,9 @@ async function initializeApp() {
 
   // 启动mcp服务器
   import('./setup/mcp_bootstrap')
+
+  // 启动plugin系统
+  import('./setup/plugin_bootstrap')
 }
 
 // ==========渲染节点==============

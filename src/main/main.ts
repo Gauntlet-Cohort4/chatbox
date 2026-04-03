@@ -9,7 +9,18 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 
-import { app, BrowserWindow, globalShortcut, ipcMain, Menu, nativeTheme, session, shell, Tray } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  globalShortcut,
+  ipcMain,
+  Menu,
+  nativeTheme,
+  protocol,
+  session,
+  shell,
+  Tray,
+} from 'electron'
 import electronDebug from 'electron-debug'
 import log from 'electron-log/main'
 import { autoUpdater } from 'electron-updater'
@@ -431,6 +442,27 @@ if (!gotTheLock) {
   app
     .whenReady()
     .then(async () => {
+      // Register chatbox-plugin:// custom protocol for serving plugin bundles from local storage
+      protocol.handle('chatbox-plugin', async (request) => {
+        try {
+          const url = new URL(request.url)
+          const pluginId = url.hostname
+          const filePath = url.pathname.slice(1) || 'index.html'
+          const blobKey = `plugin-bundle:${pluginId}`
+          const content = await getStoreBlob(blobKey)
+          if (!content) {
+            return new Response('Plugin bundle not found', { status: 404 })
+          }
+          const mimeType = filePath.endsWith('.html') ? 'text/html' : 'application/octet-stream'
+          return new Response(content, {
+            headers: { 'Content-Type': mimeType },
+          })
+        } catch (err) {
+          log.error('[chatbox-plugin] Protocol handler error:', err)
+          return new Response('Internal error', { status: 500 })
+        }
+      })
+
       await knowledgeBaseInitPromise
       await createWindow()
       ensureTray()
