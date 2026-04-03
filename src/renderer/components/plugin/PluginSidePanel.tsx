@@ -59,15 +59,36 @@ export const PluginSidePanel: FC = () => {
 		}
 	}, [activePluginId, manifest?.pluginId, manifest?.bundle.bundleVersion])
 
-	// Bridge lifecycle
+	// Bridge lifecycle + ready listener (combined to avoid race condition)
 	useEffect(() => {
 		if (!activePluginId || !manifest || !localUrl) return
+
+		let isReady = false
+
+		// Subscribe to plugin:ready BEFORE creating bridge to avoid missing it
+		const offReady = pluginEventBus.on('plugin:ready', ({ pluginId }) => {
+			if (pluginId === activePluginId) {
+				isReady = true
+				setReady(true)
+				setLoading(false)
+			}
+		})
 
 		const bridge = new PluginBridge(iframeRef, manifest)
 		bridge.init()
 		bridgeRef.current = bridge
 
+		// Ready timeout
+		const timeout = setTimeout(() => {
+			if (!isReady) {
+				setError('App took too long to respond. Try closing and reopening.')
+				setLoading(false)
+			}
+		}, READY_TIMEOUT_MS)
+
 		return () => {
+			offReady()
+			clearTimeout(timeout)
 			bridge.destroy()
 			bridgeRef.current = null
 		}
@@ -79,31 +100,6 @@ export const PluginSidePanel: FC = () => {
 			bridgeRef.current.sendAppInit(crypto.randomUUID())
 		}
 	}, [])
-
-	// Listen for plugin:ready
-	useEffect(() => {
-		if (!activePluginId) return
-
-		const offReady = pluginEventBus.on('plugin:ready', ({ pluginId }) => {
-			if (pluginId === activePluginId) {
-				setReady(true)
-				setLoading(false)
-			}
-		})
-
-		// Ready timeout
-		const timeout = setTimeout(() => {
-			if (!ready) {
-				setError('App took too long to respond. Try closing and reopening.')
-				setLoading(false)
-			}
-		}, READY_TIMEOUT_MS)
-
-		return () => {
-			offReady()
-			clearTimeout(timeout)
-		}
-	}, [activePluginId])
 
 	// Listen for plugin:complete → close panel
 	useEffect(() => {
