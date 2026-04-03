@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spotify Playlist Creator</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #121212;
+  color: #fff;
+  min-height: 100vh;
+}
+.container { max-width: 400px; margin: 0 auto; padding: 16px; }
+.waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+}
+.waiting .icon { font-size: 48px; margin-bottom: 16px; color: #1DB954; }
+.waiting .text { color: #b3b3b3; font-size: 14px; }
+.spinner { width: 24px; height: 24px; border: 3px solid #333; border-top-color: #1DB954; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 8px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.search-box { width: 100%; padding: 10px 14px; border-radius: 20px; border: none; background: #282828; color: #fff; font-size: 14px; outline: none; margin-bottom: 16px; }
+.search-box::placeholder { color: #666; }
+.section-title { font-size: 13px; font-weight: 600; color: #b3b3b3; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.track-list { list-style: none; }
+.track-item { display: flex; align-items: center; padding: 8px; border-radius: 8px; cursor: pointer; gap: 10px; }
+.track-item:hover { background: #282828; }
+.track-info { flex: 1; min-width: 0; }
+.track-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track-artist { font-size: 12px; color: #b3b3b3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track-btn { padding: 4px 12px; border-radius: 16px; border: 1px solid #535353; background: transparent; color: #fff; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.track-btn:hover { border-color: #fff; }
+.track-btn.added { border-color: #1DB954; color: #1DB954; }
+.track-btn.remove { border-color: #e74c3c; color: #e74c3c; }
+.playlist-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid #282828; }
+.playlist-name-input { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #535353; background: #282828; color: #fff; font-size: 14px; outline: none; margin-bottom: 12px; }
+.create-btn { width: 100%; padding: 10px; border-radius: 20px; border: none; background: #1DB954; color: #000; font-size: 14px; font-weight: 600; cursor: pointer; }
+.create-btn:hover { background: #1ed760; }
+.create-btn:disabled { background: #535353; color: #888; cursor: not-allowed; }
+.track-count { font-size: 12px; color: #b3b3b3; margin-bottom: 8px; }
+.error-msg { background: #e74c3c22; border: 1px solid #e74c3c44; border-radius: 8px; padding: 10px; color: #e74c3c; font-size: 13px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div class="container" id="app">
+  <div class="waiting">
+    <div class="spinner"></div>
+    <div class="text">Waiting for Spotify authorization...</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  let sessionId = null;
+  let accessToken = null;
+  let searchResults = [];
+  let playlistTracks = [];
+  let playlistName = 'My Playlist';
+  let error = null;
+
+  function sendMessage(msg) {
+    window.parent.postMessage(msg, '*');
+  }
+
+  function sendStateUpdate() {
+    sendMessage({
+      type: 'state:update',
+      state: {
+        isAuthenticated: !!accessToken,
+        playlistName,
+        tracksInPlaylist: playlistTracks.map(t => ({
+          trackId: t.trackId,
+          trackName: t.trackName,
+          artistName: t.artistName,
+        })),
+        trackCount: playlistTracks.length,
+      },
+      description: playlistTracks.length > 0
+        ? `Building playlist '${playlistName}' with ${playlistTracks.length} track${playlistTracks.length !== 1 ? 's' : ''} so far.`
+        : `Authenticated. Ready to search and build a playlist.`,
+    });
+  }
+
+  function render() {
+    const app = document.getElementById('app');
+    if (!accessToken) {
+      app.innerHTML = `
+        <div class="waiting">
+          <div class="spinner"></div>
+          <div class="text">Waiting for Spotify authorization...</div>
+        </div>`;
+      return;
+    }
+
+    const searchHtml = searchResults.map(t => {
+      const isAdded = playlistTracks.some(pt => pt.trackId === t.trackId);
+      return `
+        <li class="track-item">
+          <div class="track-info">
+            <div class="track-name">${escapeHtml(t.trackName)}</div>
+            <div class="track-artist">${escapeHtml(t.artistName)} · ${escapeHtml(t.albumName)}</div>
+          </div>
+          <button class="track-btn ${isAdded ? 'added' : ''}" data-action="add" data-id="${t.trackId}">
+            ${isAdded ? 'Added' : 'Add'}
+          </button>
+        </li>`;
+    }).join('');
+
+    const playlistHtml = playlistTracks.map(t => `
+      <li class="track-item">
+        <div class="track-info">
+          <div class="track-name">${escapeHtml(t.trackName)}</div>
+          <div class="track-artist">${escapeHtml(t.artistName)}</div>
+        </div>
+        <button class="track-btn remove" data-action="remove" data-id="${t.trackId}">Remove</button>
+      </li>`).join('');
+
+    app.innerHTML = `
+      <input class="search-box" id="searchInput" type="text" placeholder="Search for songs..." />
+      ${error ? `<div class="error-msg">${escapeHtml(error)}</div>` : ''}
+      ${searchResults.length > 0 ? `
+        <div class="section-title">Search Results</div>
+        <ul class="track-list">${searchHtml}</ul>
+      ` : ''}
+      <div class="playlist-section">
+        <div class="section-title">Your Playlist</div>
+        <input class="playlist-name-input" id="playlistNameInput" type="text" value="${escapeHtml(playlistName)}" placeholder="Playlist name..." />
+        <div class="track-count">${playlistTracks.length} track${playlistTracks.length !== 1 ? 's' : ''}</div>
+        ${playlistTracks.length > 0 ? `<ul class="track-list">${playlistHtml}</ul>` : '<div style="color:#666;font-size:13px;text-align:center;padding:16px;">Add tracks from search results above</div>'}
+        <button class="create-btn" id="createBtn" ${playlistTracks.length === 0 ? 'disabled' : ''}>Create Playlist</button>
+      </div>`;
+
+    // Event listeners
+    document.getElementById('searchInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doSearch(e.target.value);
+    });
+    document.getElementById('playlistNameInput').addEventListener('change', (e) => {
+      playlistName = e.target.value;
+    });
+    document.getElementById('createBtn').addEventListener('click', createPlaylist);
+    app.querySelectorAll('[data-action="add"]').forEach(btn => {
+      btn.addEventListener('click', () => addTrack(btn.dataset.id));
+    });
+    app.querySelectorAll('[data-action="remove"]').forEach(btn => {
+      btn.addEventListener('click', () => removeTrack(btn.dataset.id));
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function addTrack(trackId) {
+    const track = searchResults.find(t => t.trackId === trackId);
+    if (track && !playlistTracks.some(t => t.trackId === trackId)) {
+      playlistTracks = [...playlistTracks, track];
+      sendStateUpdate();
+      render();
+    }
+  }
+
+  function removeTrack(trackId) {
+    playlistTracks = playlistTracks.filter(t => t.trackId !== trackId);
+    sendStateUpdate();
+    render();
+  }
+
+  async function spotifyFetch(url, options = {}) {
+    const res = await fetch(url, {
+      ...options,
+      headers: { 'Authorization': `Bearer ${accessToken}`, ...options.headers },
+    });
+    if (res.status === 401) {
+      error = 'Spotify session expired. Please re-authorize.';
+      render();
+      throw new Error('Spotify session expired. Please re-authorize.');
+    }
+    return res;
+  }
+
+  async function doSearch(query) {
+    if (!query.trim()) return;
+    error = null;
+    try {
+      const res = await spotifyFetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=10`);
+      const data = await res.json();
+      searchResults = (data.tracks?.items || []).map(t => ({
+        trackId: t.id,
+        trackName: t.name,
+        artistName: t.artists.map(a => a.name).join(', '),
+        albumName: t.album?.name || '',
+        durationMs: t.duration_ms,
+        previewUrl: t.preview_url,
+      }));
+      render();
+    } catch (err) {
+      if (!error) error = err.message;
+      render();
+    }
+  }
+
+  async function handleToolInvoke(msg) {
+    const { callId, toolName, args } = msg;
+    error = null;
+
+    try {
+      switch (toolName) {
+        case 'search_tracks': {
+          const res = await spotifyFetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(args.query)}&type=track&limit=10`);
+          const data = await res.json();
+          const tracks = (data.tracks?.items || []).map(t => ({
+            trackId: t.id, trackName: t.name,
+            artistName: t.artists.map(a => a.name).join(', '),
+            albumName: t.album?.name || '', durationMs: t.duration_ms, previewUrl: t.preview_url,
+          }));
+          searchResults = tracks;
+          render();
+          sendMessage({ type: 'tool:result', callId, result: { tracks } });
+          break;
+        }
+        case 'create_playlist': {
+          const meRes = await spotifyFetch('https://api.spotify.com/v1/me');
+          const me = await meRes.json();
+          const createRes = await spotifyFetch(`https://api.spotify.com/v1/users/${me.id}/playlists`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: args.playlistName, description: args.description || '', public: false }),
+          });
+          const playlist = await createRes.json();
+          sendMessage({ type: 'event:log', eventDescription: `Created playlist '${args.playlistName}'`, eventTimestamp: Date.now() });
+          sendMessage({ type: 'tool:result', callId, result: { playlistId: playlist.id, playlistName: playlist.name, playlistUrl: playlist.external_urls?.spotify } });
+          break;
+        }
+        case 'add_to_playlist': {
+          const trackUris = (args.trackIds || []).map(id => `spotify:track:${id}`);
+          await spotifyFetch(`https://api.spotify.com/v1/playlists/${args.playlistId}/tracks`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uris: trackUris }),
+          });
+          sendMessage({ type: 'event:log', eventDescription: `Added ${trackUris.length} tracks to playlist`, eventTimestamp: Date.now() });
+          sendMessage({ type: 'tool:result', callId, result: { addedCount: trackUris.length, playlistId: args.playlistId } });
+          break;
+        }
+        default:
+          sendMessage({ type: 'tool:error', callId, error: `Unknown tool: ${toolName}` });
+      }
+    } catch (err) {
+      sendMessage({ type: 'tool:error', callId, error: err.message });
+    }
+  }
+
+  async function createPlaylist() {
+    if (playlistTracks.length === 0) return;
+    error = null;
+    try {
+      const meRes = await spotifyFetch('https://api.spotify.com/v1/me');
+      const me = await meRes.json();
+      const createRes = await spotifyFetch(`https://api.spotify.com/v1/users/${me.id}/playlists`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: playlistName, public: false }),
+      });
+      const playlist = await createRes.json();
+      const trackUris = playlistTracks.map(t => `spotify:track:${t.trackId}`);
+      await spotifyFetch(`https://api.spotify.com/v1/playlists/${playlist.id}/tracks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uris: trackUris }),
+      });
+      sendMessage({ type: 'event:log', eventDescription: `Created playlist '${playlistName}' with ${playlistTracks.length} tracks`, eventTimestamp: Date.now() });
+      sendMessage({ type: 'app:complete', summary: `Created Spotify playlist '${playlistName}' with ${playlistTracks.length} tracks. The playlist is saved to your Spotify account.` });
+    } catch (err) {
+      error = err.message;
+      render();
+    }
+  }
+
+  window.addEventListener('message', function(event) {
+    const msg = event.data;
+    if (!msg || !msg.type) return;
+
+    switch (msg.type) {
+      case 'app:init':
+        sessionId = msg.sessionId;
+        break;
+      case 'auth:token':
+        accessToken = msg.token;
+        sendStateUpdate();
+        render();
+        break;
+      case 'tool:invoke':
+        handleToolInvoke(msg);
+        break;
+      case 'state:request':
+        sendMessage({
+          type: 'state:response',
+          state: { isAuthenticated: !!accessToken, playlistName, trackCount: playlistTracks.length },
+          description: accessToken ? `Playlist builder with ${playlistTracks.length} tracks` : 'Waiting for authorization',
+        });
+        break;
+    }
+  });
+
+  sendMessage({ type: 'app:ready' });
+})();
+</script>
+</body>
+</html>
