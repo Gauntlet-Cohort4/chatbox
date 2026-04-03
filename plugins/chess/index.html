@@ -69,6 +69,23 @@
 		cursor: pointer;
 		position: relative;
 		line-height: 1;
+		-webkit-user-select: none;
+		user-select: none;
+		touch-action: none;
+	}
+
+	.square.dragging {
+		opacity: 0.3;
+	}
+
+	.drag-ghost {
+		position: fixed;
+		font-size: 42px;
+		pointer-events: none;
+		z-index: 1000;
+		transform: translate(-50%, -50%);
+		filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+		line-height: 1;
 	}
 
 	.square.light {
@@ -415,6 +432,10 @@
 
 				div.textContent = getPieceUnicode(piece);
 				div.addEventListener('click', onSquareClick);
+				if (piece && piece.color === game.turn() && !game.game_over()) {
+					div.addEventListener('mousedown', onDragStart);
+					div.addEventListener('touchstart', onDragStart, { passive: false });
+				}
 				boardEl.appendChild(div);
 			}
 		}
@@ -603,6 +624,124 @@
 				renderBoard();
 			}
 		}
+	}
+
+	// --- Drag and Drop ---
+	var dragState = null; // { fromSquare, ghost, legalMoves, startX, startY, isDragging }
+
+	function getSquareFromPoint(x, y) {
+		var el = document.elementFromPoint(x, y);
+		while (el && !el.dataset.square) {
+			el = el.parentElement;
+		}
+		return el ? el.dataset.square : null;
+	}
+
+	function onDragStart(e) {
+		if (game.game_over()) return;
+		var sq = e.currentTarget.dataset.square;
+		var board = game.board();
+		var row = RANKS.indexOf(sq[1]);
+		var col = FILES.indexOf(sq[0]);
+		var piece = board[row][col];
+		if (!piece || piece.color !== game.turn()) return;
+
+		e.preventDefault();
+		var clientX = e.clientX || (e.touches && e.touches[0].clientX);
+		var clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+		var moves = game.moves({ square: sq, verbose: true });
+
+		// Create floating ghost (hidden until drag threshold met)
+		var ghost = document.createElement('div');
+		ghost.className = 'drag-ghost';
+		ghost.textContent = getPieceUnicode(piece);
+		ghost.style.left = clientX + 'px';
+		ghost.style.top = clientY + 'px';
+		ghost.style.display = 'none';
+		document.body.appendChild(ghost);
+
+		dragState = { fromSquare: sq, ghost: ghost, legalMoves: moves, startX: clientX, startY: clientY, isDragging: false };
+
+		document.addEventListener('mousemove', onDragMove);
+		document.addEventListener('mouseup', onDragEnd);
+		document.addEventListener('touchmove', onDragMove, { passive: false });
+		document.addEventListener('touchend', onDragEnd);
+	}
+
+	function onDragMove(e) {
+		if (!dragState) return;
+		e.preventDefault();
+		var clientX = e.clientX || (e.touches && e.touches[0].clientX);
+		var clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+		// Activate drag after 5px threshold
+		if (!dragState.isDragging) {
+			var dx = clientX - dragState.startX;
+			var dy = clientY - dragState.startY;
+			if (Math.sqrt(dx * dx + dy * dy) < 5) return;
+			dragState.isDragging = true;
+			dragState.ghost.style.display = '';
+			// Show selection + legal moves and dim source
+			selectedSquare = dragState.fromSquare;
+			legalMovesForSelected = dragState.legalMoves;
+			renderBoard();
+			var sourceEl = boardEl.querySelector('[data-square="' + dragState.fromSquare + '"]');
+			if (sourceEl) sourceEl.classList.add('dragging');
+		}
+
+		dragState.ghost.style.left = clientX + 'px';
+		dragState.ghost.style.top = clientY + 'px';
+	}
+
+	function onDragEnd(e) {
+		if (!dragState) return;
+		var wasDragging = dragState.isDragging;
+		var clientX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
+		var clientY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
+
+		// Remove ghost
+		if (dragState.ghost.parentNode) {
+			dragState.ghost.parentNode.removeChild(dragState.ghost);
+		}
+
+		// Clean up listeners
+		document.removeEventListener('mousemove', onDragMove);
+		document.removeEventListener('mouseup', onDragEnd);
+		document.removeEventListener('touchmove', onDragMove);
+		document.removeEventListener('touchend', onDragEnd);
+
+		var from = dragState.fromSquare;
+		var moves = dragState.legalMoves;
+		dragState = null;
+
+		// If threshold wasn't met, let the click handler deal with it
+		if (!wasDragging) return;
+
+		var targetSq = getSquareFromPoint(clientX, clientY);
+
+		if (targetSq && targetSq !== from) {
+			// Check if legal
+			var isLegal = false;
+			for (var i = 0; i < moves.length; i++) {
+				if (moves[i].to === targetSq) {
+					isLegal = true;
+					break;
+				}
+			}
+			if (isLegal) {
+				if (needsPromotion(from, targetSq)) {
+					showPromotionDialog(from, targetSq);
+				} else {
+					executeMove(from, targetSq);
+				}
+				return;
+			}
+		}
+
+		// Drop didn't land on a legal square — clear selection
+		clearSelection();
+		renderBoard();
 	}
 
 	// --- New game ---
