@@ -1,0 +1,203 @@
+{
+  "catalogVersion": 1775235489286,
+  "lastUpdatedAt": 1775235489286,
+  "applications": [
+    {
+      "pluginId": "chess",
+      "pluginName": "Chess",
+      "description": "Interactive chess game. Play against yourself or ask the AI for move suggestions and analysis.",
+      "version": "1.0.0",
+      "author": "ChatBridge",
+      "category": "internal",
+      "contentRating": "safe",
+      "tools": [
+        {
+          "toolName": "start_game",
+          "toolDescription": "Start a new chess game.",
+          "parameters": []
+        },
+        {
+          "toolName": "make_move",
+          "toolDescription": "Make a move using algebraic notation.",
+          "parameters": [
+            {
+              "parameterName": "move",
+              "parameterType": "string",
+              "parameterDescription": "The move in standard algebraic notation",
+              "isRequired": true
+            }
+          ]
+        },
+        {
+          "toolName": "get_board_state",
+          "toolDescription": "Get current board position and game status.",
+          "parameters": []
+        },
+        {
+          "toolName": "resign",
+          "toolDescription": "Resign the current game.",
+          "parameters": []
+        }
+      ],
+      "bundle": {
+        "bundleUrl": "http://localhost:9877/plugins/chess/index.html",
+        "bundleVersion": "1.0.0",
+        "bundleHash": "e040f4c5345ca1f28a42947b275ec5971f81917ecee826bdc62590fe6431d460",
+        "entryFile": "index.html"
+      },
+      "userInterface": {
+        "defaultWidth": 420,
+        "defaultHeight": 520,
+        "sandboxPermissions": [],
+        "isPersistent": true
+      },
+      "authentication": {
+        "type": "none"
+      },
+      "contextPrompt": "This is an interactive chess game. The user plays on the board in the side panel. You can see the board state as a FEN string and the full move history. When the user asks for help, analyze the current position and suggest moves with explanations suitable for a student learning chess.",
+      "capabilities": {
+        "supportsScreenshot": true,
+        "supportsVerboseState": true,
+        "supportsEventLog": true
+      },
+      "isVerified": true,
+      "approvedAt": 1775235489286
+    },
+    {
+      "pluginId": "spotify",
+      "pluginName": "Spotify Playlist Creator",
+      "description": "Search for songs and create playlists on your Spotify account. Requires Spotify authorization.",
+      "version": "1.0.0",
+      "author": "ChatBridge",
+      "category": "external-authenticated",
+      "contentRating": "general",
+      "tools": [
+        {
+          "toolName": "search_tracks",
+          "toolDescription": "Search Spotify for tracks by name, artist, or keywords. Returns up to 10 matching tracks with details.",
+          "parameters": [
+            {
+              "parameterName": "query",
+              "parameterType": "string",
+              "parameterDescription": "Search query for finding tracks (e.g., 'lo-fi study beats' or 'Beethoven symphony')",
+              "isRequired": true
+            }
+          ]
+        },
+        {
+          "toolName": "create_playlist",
+          "toolDescription": "Create a new playlist on the user's Spotify account.",
+          "parameters": [
+            {
+              "parameterName": "playlistName",
+              "parameterType": "string",
+              "parameterDescription": "Name for the new playlist",
+              "isRequired": true
+            },
+            {
+              "parameterName": "description",
+              "parameterType": "string",
+              "parameterDescription": "Optional description for the playlist",
+              "isRequired": false
+            }
+          ]
+        },
+        {
+          "toolName": "add_to_playlist",
+          "toolDescription": "Add tracks to an existing playlist by their track IDs.",
+          "parameters": [
+            {
+              "parameterName": "playlistId",
+              "parameterType": "string",
+              "parameterDescription": "The Spotify playlist ID to add tracks to",
+              "isRequired": true
+            },
+            {
+              "parameterName": "trackIds",
+              "parameterType": "object",
+              "parameterDescription": "Array of Spotify track IDs to add to the playlist",
+              "isRequired": true
+            }
+          ]
+        }
+      ],
+      "bundle": {
+        "bundleUrl": "http://localhost:9877/plugins/spotify/index.html",
+        "bundleVersion": "1.0.0",
+        "bundleHash": "7b9c453418990dcbc11acadf3a1ae335f15500815d717d428ce49b54a27ebaa6",
+        "entryFile": "index.html"
+      },
+      "userInterface": {
+        "defaultWidth": 400,
+        "defaultHeight": 550,
+        "sandboxPermissions": [],
+        "isPersistent": true
+      },
+      "authentication": {
+        "type": "oauth2-pkce",
+        "authorizationUrl": "https://accounts.spotify.com/authorize",
+        "tokenUrl": "https://accounts.spotify.com/api/token",
+        "scopes": [
+          "playlist-modify-public",
+          "playlist-modify-private",
+          "user-read-private"
+        ],
+        "clientId": "PLACEHOLDER_REGISTER_SPOTIFY_APP"
+      },
+      "contextPrompt": "This is a Spotify playlist creator. The user can search for songs, build a playlist, and save it to their Spotify account. Help them find music that fits their mood or purpose. If they ask for recommendations, suggest search queries. When they are done building their playlist, encourage them to create it.",
+      "capabilities": {
+        "supportsScreenshot": false,
+        "supportsVerboseState": true,
+        "supportsEventLog": true
+      },
+      "isVerified": true,
+      "approvedAt": 1775235489286
+    },
+    {
+      "pluginId": "weather",
+      "pluginName": "Weather Dashboard",
+      "description": "Look up current weather conditions and a 5-day forecast for any location worldwide.",
+      "version": "1.0.0",
+      "author": "ChatBridge",
+      "category": "external-public",
+      "contentRating": "safe",
+      "tools": [
+        {
+          "toolName": "lookup_weather",
+          "toolDescription": "Look up the current weather and 5-day forecast for a location. Returns temperature, conditions, wind, humidity, and daily forecasts.",
+          "parameters": [
+            {
+              "parameterName": "location",
+              "parameterType": "string",
+              "parameterDescription": "City name or location to look up weather for (e.g., 'Austin, Texas' or 'London, UK')",
+              "isRequired": true
+            }
+          ]
+        }
+      ],
+      "bundle": {
+        "bundleUrl": "http://localhost:9877/plugins/weather/index.html",
+        "bundleVersion": "1.0.0",
+        "bundleHash": "fa2b501f39d7b30cc8e8e60d167a19ddbff31320a2f545d1c0d356386dd0e31b",
+        "entryFile": "index.html"
+      },
+      "userInterface": {
+        "defaultWidth": 380,
+        "defaultHeight": 450,
+        "sandboxPermissions": [],
+        "isPersistent": false
+      },
+      "authentication": {
+        "type": "none"
+      },
+      "contextPrompt": "This is a weather dashboard. When the user asks about weather, use the lookup_weather tool with their location. The tool returns structured data including current conditions and a forecast. Present the information conversationally and offer to help with weather-related questions like what to wear or whether outdoor activities are advisable.",
+      "capabilities": {
+        "supportsScreenshot": false,
+        "supportsVerboseState": false,
+        "supportsEventLog": false
+      },
+      "isVerified": true,
+      "approvedAt": 1775235489286
+    }
+  ]
+}
