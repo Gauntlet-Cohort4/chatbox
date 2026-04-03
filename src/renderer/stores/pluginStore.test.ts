@@ -60,6 +60,7 @@ beforeEach(async () => {
 		enabledPluginIds: [],
 		activePluginId: null,
 		pluginStates: {},
+		pluginStateDescriptions: {},
 		pluginEventLogs: {},
 		pluginTokens: {},
 		localBundles: {},
