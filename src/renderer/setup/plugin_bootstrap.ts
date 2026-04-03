@@ -1,8 +1,22 @@
 import { startCatalogPolling } from '@/packages/plugin-catalog/fetcher'
+import { pluginEventBus } from '@/packages/plugin-event-bus'
 import { pluginStore } from '@/stores/pluginStore'
 import { initSettingsStore } from '@/stores/settingsStore'
 
 let cleanupPolling: (() => void) | null = null
+
+// Wire event bus listeners for state and event log persistence
+pluginEventBus.on('plugin:event-log', (data) => {
+	pluginStore.getState().appendEventLog(data.pluginId, {
+		eventDescription: data.eventDescription,
+		eventData: data.eventData,
+		eventTimestamp: data.eventTimestamp,
+	})
+})
+
+pluginEventBus.on('plugin:state-update', (data) => {
+	pluginStore.getState().updatePluginState(data.pluginId, data.state, data.description)
+})
 
 initSettingsStore()
 	.then((settings) => {

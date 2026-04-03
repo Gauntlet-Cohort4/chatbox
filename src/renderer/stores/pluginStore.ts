@@ -18,6 +18,7 @@ interface PluginStoreState {
 	enabledPluginIds: string[]
 	activePluginId: string | null
 	pluginStates: Record<string, Record<string, unknown>>
+	pluginStateDescriptions: Record<string, string>
 	pluginEventLogs: Record<string, PluginEventLogEntry[]>
 	pluginTokens: Record<string, { accessToken: string; refreshToken?: string; expiresAt?: number }>
 	localBundles: Record<string, { bundleVersion: string; localUrl: string }>
@@ -50,6 +51,7 @@ export const pluginStore = createStore<PluginStoreState & PluginStoreActions>()(
 			enabledPluginIds: [],
 			activePluginId: null,
 			pluginStates: {},
+			pluginStateDescriptions: {},
 			pluginEventLogs: {},
 			pluginTokens: {},
 			localBundles: {},
@@ -81,9 +83,12 @@ export const pluginStore = createStore<PluginStoreState & PluginStoreActions>()(
 					state.activePluginId = pluginId
 				}),
 
-			updatePluginState: (pluginId, pluginState, _description) =>
+			updatePluginState: (pluginId, pluginState, description) =>
 				set((state) => {
 					state.pluginStates[pluginId] = pluginState
+					if (description !== undefined) {
+						state.pluginStateDescriptions[pluginId] = description
+					}
 				}),
 
 			appendEventLog: (pluginId, entry) =>
