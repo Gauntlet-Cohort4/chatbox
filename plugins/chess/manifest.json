@@ -1,0 +1,59 @@
+{
+	"pluginId": "chess",
+	"pluginName": "Chess",
+	"description": "Interactive chess game. Play against yourself or ask the AI for move suggestions and analysis.",
+	"version": "1.0.0",
+	"author": "ChatBridge",
+	"category": "internal",
+	"contentRating": "safe",
+	"tools": [
+		{
+			"toolName": "start_game",
+			"toolDescription": "Start a new chess game.",
+			"parameters": []
+		},
+		{
+			"toolName": "make_move",
+			"toolDescription": "Make a move using algebraic notation.",
+			"parameters": [
+				{
+					"parameterName": "move",
+					"parameterType": "string",
+					"parameterDescription": "The move in standard algebraic notation",
+					"isRequired": true
+				}
+			]
+		},
+		{
+			"toolName": "get_board_state",
+			"toolDescription": "Get current board position and game status.",
+			"parameters": []
+		},
+		{
+			"toolName": "resign",
+			"toolDescription": "Resign the current game.",
+			"parameters": []
+		}
+	],
+	"bundle": {
+		"bundleUrl": "https://chatbox-plugins.pages.dev/chess/bundle.zip",
+		"bundleVersion": "1.0.0",
+		"bundleHash": "PLACEHOLDER_COMPUTE_AFTER_BUILD",
+		"entryFile": "index.html"
+	},
+	"userInterface": {
+		"defaultWidth": 420,
+		"defaultHeight": 520,
+		"sandboxPermissions": [],
+		"isPersistent": true
+	},
+	"authentication": {
+		"type": "none"
+	},
+	"contextPrompt": "This is an interactive chess game. The user plays on the board in the side panel. You can see the board state as a FEN string and the full move history. When the user asks for help, analyze the current position and suggest moves with explanations suitable for a student learning chess.",
+	"capabilities": {
+		"supportsScreenshot": true,
+		"supportsVerboseState": true,
+		"supportsEventLog": true
+	}
+}
