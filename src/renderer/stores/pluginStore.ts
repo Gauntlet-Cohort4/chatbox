@@ -11,11 +11,14 @@ interface PluginEventLogEntry {
 	eventTimestamp: number
 }
 
+export type PluginApprovalStatus = 'not-approved' | 'approved' | 'deployed'
+
 interface PluginStoreState {
 	catalog: PluginCatalog | null
 	catalogVersion: number | null
 	catalogLastFetched: number | null
 	enabledPluginIds: string[]
+	pluginApprovalStatus: Record<string, PluginApprovalStatus>
 	activePluginId: string | null
 	pluginStates: Record<string, Record<string, unknown>>
 	pluginStateDescriptions: Record<string, string>
@@ -37,6 +40,8 @@ interface PluginStoreActions {
 	setPluginToken: (pluginId: string, token: { accessToken: string; refreshToken?: string; expiresAt?: number }) => void
 	clearPluginToken: (pluginId: string) => void
 	setLocalBundle: (pluginId: string, bundleVersion: string, localUrl: string) => void
+	setApprovalStatus: (pluginId: string, status: PluginApprovalStatus) => void
+	getApprovalStatus: (pluginId: string) => PluginApprovalStatus
 	getEnabledManifests: () => PluginManifest[]
 	getActiveManifest: () => PluginManifest | null
 }
@@ -49,6 +54,7 @@ export const pluginStore = createStore<PluginStoreState & PluginStoreActions>()(
 			catalogVersion: null,
 			catalogLastFetched: null,
 			enabledPluginIds: [],
+			pluginApprovalStatus: {},
 			activePluginId: null,
 			pluginStates: {},
 			pluginStateDescriptions: {},
@@ -123,6 +129,24 @@ export const pluginStore = createStore<PluginStoreState & PluginStoreActions>()(
 				set((state) => {
 					state.localBundles[pluginId] = { bundleVersion, localUrl }
 				}),
+
+			setApprovalStatus: (pluginId, status) =>
+				set((state) => {
+					state.pluginApprovalStatus[pluginId] = status
+					// Sync enabledPluginIds: deployed = enabled, anything else = disabled
+					if (status === 'deployed') {
+						if (!state.enabledPluginIds.includes(pluginId)) {
+							state.enabledPluginIds.push(pluginId)
+						}
+					} else {
+						state.enabledPluginIds = state.enabledPluginIds.filter((id) => id !== pluginId)
+					}
+				}),
+
+			getApprovalStatus: (pluginId) => {
+				const { pluginApprovalStatus } = get()
+				return pluginApprovalStatus[pluginId] ?? 'not-approved'
+			},
 
 			getEnabledManifests: () => {
 				const { catalog, enabledPluginIds } = get()
