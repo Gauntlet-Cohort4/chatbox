@@ -1,0 +1,1 @@
+export { PluginBridge } from './bridge'
