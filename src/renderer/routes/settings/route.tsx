@@ -11,6 +11,7 @@ import {
   IconInfoCircle,
   IconKeyboard,
   IconMessages,
+  IconPuzzle,
   IconSparkles,
   IconWorldWww,
 } from '@tabler/icons-react'
@@ -24,6 +25,7 @@ import { ScalableIcon } from '@/components/common/ScalableIcon'
 import { useProviders } from '@/hooks/useProviders'
 import { useIsSmallScreen } from '@/hooks/useScreenChange'
 import platform from '@/platform'
+import { demoStore } from '@/stores/demoStore'
 import { featureFlags } from '@/utils/feature-flags'
 
 const ITEMS = [
@@ -89,6 +91,12 @@ const ITEMS = [
     label: 'General Settings',
     icon: <IconAdjustmentsHorizontal className="w-full h-full" />,
   },
+  {
+    key: 'plugins',
+    label: 'Apps',
+    icon: <IconPuzzle className="w-full h-full" />,
+    teacherOnly: true,
+  },
 ]
 
 export const Route = createFileRoute('/settings')({
@@ -129,6 +137,7 @@ export function SettingsRoot() {
   const { t } = useTranslation()
   const routerState = useRouterState()
   const key = routerState.location.pathname.split('/')[2]
+  const demoRole = demoStore.getState().demoRole
   const isSmallScreen = useIsSmallScreen()
   const { providers: availableProviders } = useProviders()
   const isChatboxAIActivated = availableProviders.some((p) => p.id === 'chatbox-ai')
@@ -145,7 +154,7 @@ export function SettingsRoot() {
             isSmallScreen ? 'w-full border-r-0' : 'flex-[1_0_auto]'
           )}
         >
-          {ITEMS.map((item) => (
+          {ITEMS.filter((item) => !('teacherOnly' in item && item.teacherOnly) || demoRole === 'teacher').map((item) => (
             <Link
               disabled={
                 routerState.location.pathname === `/settings/${item.key}` ||
