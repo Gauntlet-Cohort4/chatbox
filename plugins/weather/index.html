@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weather Dashboard</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  min-height: 100vh;
+  padding: 16px;
+}
+.container { max-width: 360px; margin: 0 auto; }
+.location-name {
+  font-size: 20px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 12px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.current-weather {
+  background: rgba(255,255,255,0.15);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  margin-bottom: 16px;
+}
+.temp-display {
+  font-size: 48px;
+  font-weight: 300;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.weather-desc {
+  font-size: 16px;
+  opacity: 0.9;
+  margin-bottom: 12px;
+}
+.weather-details {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  font-size: 13px;
+  opacity: 0.85;
+}
+.weather-details .detail { text-align: center; }
+.weather-details .detail-label { font-size: 11px; opacity: 0.7; }
+.forecast-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  opacity: 0.9;
+}
+.forecast-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.forecast-card {
+  flex: 0 0 auto;
+  background: rgba(255,255,255,0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  text-align: center;
+  min-width: 64px;
+  backdrop-filter: blur(10px);
+}
+.forecast-card .day { font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+.forecast-card .icon { font-size: 20px; margin-bottom: 2px; }
+.forecast-card .temps { font-size: 12px; }
+.forecast-card .temps .high { font-weight: 600; }
+.forecast-card .temps .low { opacity: 0.7; }
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  opacity: 0.8;
+}
+.loading .spinner {
+  width: 32px; height: 32px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.error-msg {
+  background: rgba(255,0,0,0.2);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  font-size: 14px;
+}
+.waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  text-align: center;
+  opacity: 0.8;
+}
+.waiting .icon { font-size: 48px; margin-bottom: 12px; }
+.waiting .text { font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="container" id="app">
+  <div class="waiting">
+    <div class="icon">🌤</div>
+    <div class="text">Ask about the weather to get started</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  let sessionId = null;
+
+  const WMO_CODES = {
+    0: { desc: 'Clear sky', icon: '☀️' },
+    1: { desc: 'Mainly clear', icon: '🌤' },
+    2: { desc: 'Partly cloudy', icon: '⛅' },
+    3: { desc: 'Overcast', icon: '☁️' },
+    45: { desc: 'Foggy', icon: '🌫' },
+    48: { desc: 'Depositing rime fog', icon: '🌫' },
+    51: { desc: 'Light drizzle', icon: '🌦' },
+    53: { desc: 'Moderate drizzle', icon: '🌦' },
+    55: { desc: 'Dense drizzle', icon: '🌧' },
+    61: { desc: 'Slight rain', icon: '🌦' },
+    63: { desc: 'Moderate rain', icon: '🌧' },
+    65: { desc: 'Heavy rain', icon: '🌧' },
+    71: { desc: 'Slight snow', icon: '🌨' },
+    73: { desc: 'Moderate snow', icon: '❄️' },
+    75: { desc: 'Heavy snow', icon: '❄️' },
+    80: { desc: 'Slight rain showers', icon: '🌦' },
+    81: { desc: 'Moderate rain showers', icon: '🌧' },
+    82: { desc: 'Violent rain showers', icon: '⛈' },
+    95: { desc: 'Thunderstorm', icon: '⛈' },
+    96: { desc: 'Thunderstorm with hail', icon: '⛈' },
+    99: { desc: 'Thunderstorm with heavy hail', icon: '⛈' },
+  };
+
+  function getWeatherInfo(code) {
+    return WMO_CODES[code] || { desc: 'Unknown', icon: '🌡' };
+  }
+
+  function celsiusToFahrenheit(c) {
+    return Math.round(c * 9/5 + 32);
+  }
+
+  function kmhToMph(kmh) {
+    return Math.round(kmh * 0.621371);
+  }
+
+  function formatDate(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { weekday: 'short' });
+  }
+
+  function sendMessage(msg) {
+    window.parent.postMessage(msg, '*');
+  }
+
+  function renderWeather(data) {
+    const app = document.getElementById('app');
+    const forecastHtml = data.forecast.map(day => `
+      <div class="forecast-card">
+        <div class="day">${day.dayName}</div>
+        <div class="icon">${day.icon}</div>
+        <div class="temps">
+          <span class="high">${day.highTemperature}°</span>
+          <span class="low">${day.lowTemperature}°</span>
+        </div>
+      </div>
+    `).join('');
+
+    app.innerHTML = `
+      <div class="location-name">${data.location}</div>
+      <div class="current-weather">
+        <div class="temp-display">${data.currentTemperature}°F</div>
+        <div class="weather-desc">${data.weatherIcon} ${data.weatherDescription}</div>
+        <div class="weather-details">
+          <div class="detail">
+            <div>${data.windSpeed} mph</div>
+            <div class="detail-label">Wind</div>
+          </div>
+          <div class="detail">
+            <div>${data.humidity}%</div>
+            <div class="detail-label">Humidity</div>
+          </div>
+        </div>
+      </div>
+      <div class="forecast-title">5-Day Forecast</div>
+      <div class="forecast-row">${forecastHtml}</div>
+    `;
+  }
+
+  function renderLoading() {
+    document.getElementById('app').innerHTML = `
+      <div class="loading">
+        <div class="spinner"></div>
+        <div>Looking up weather...</div>
+      </div>
+    `;
+  }
+
+  function renderError(msg) {
+    document.getElementById('app').innerHTML = `
+      <div class="error-msg">${msg}</div>
+    `;
+  }
+
+  async function lookupWeather(location, callId) {
+    renderLoading();
+
+    try {
+      // Geocoding
+      const geoRes = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1`
+      );
+      const geoData = await geoRes.json();
+
+      if (!geoData.results || geoData.results.length === 0) {
+        const errorMsg = `Location not found: ${location}. Try a more specific city name.`;
+        renderError(errorMsg);
+        sendMessage({ type: 'tool:error', callId, error: errorMsg });
+        return;
+      }
+
+      const { latitude, longitude, name, admin1, country } = geoData.results[0];
+      const locationName = admin1 ? `${name}, ${admin1}` : `${name}, ${country}`;
+
+      // Weather
+      const weatherRes = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode&hourly=relativehumidity_2m&timezone=auto&forecast_days=5`
+      );
+      const weatherData = await weatherRes.json();
+
+      const current = weatherData.current_weather;
+      const currentInfo = getWeatherInfo(current.weathercode);
+      const currentHumidity = weatherData.hourly?.relativehumidity_2m?.[0] ?? 0;
+
+      const forecast = weatherData.daily.time.map((date, i) => {
+        const dayInfo = getWeatherInfo(weatherData.daily.weathercode[i]);
+        return {
+          date,
+          dayName: formatDate(date),
+          highTemperature: celsiusToFahrenheit(weatherData.daily.temperature_2m_max[i]),
+          lowTemperature: celsiusToFahrenheit(weatherData.daily.temperature_2m_min[i]),
+          weatherDescription: dayInfo.desc,
+          icon: dayInfo.icon,
+        };
+      });
+
+      const result = {
+        location: locationName,
+        latitude,
+        longitude,
+        currentTemperature: celsiusToFahrenheit(current.temperature),
+        temperatureUnit: '°F',
+        weatherDescription: currentInfo.desc,
+        weatherIcon: currentInfo.icon,
+        windSpeed: kmhToMph(current.windspeed),
+        windSpeedUnit: 'mph',
+        humidity: currentHumidity,
+        forecast: forecast.map(f => ({
+          date: f.date,
+          highTemperature: f.highTemperature,
+          lowTemperature: f.lowTemperature,
+          weatherDescription: f.weatherDescription,
+        })),
+      };
+
+      renderWeather({ ...result, forecast, weatherIcon: currentInfo.icon });
+
+      sendMessage({ type: 'tool:result', callId, result });
+
+      const summary = `Current weather in ${locationName}: ${result.currentTemperature}°F, ${result.weatherDescription.toLowerCase()} with winds at ${result.windSpeed} mph.`;
+      sendMessage({ type: 'app:complete', summary });
+
+    } catch (err) {
+      const errorMsg = `Failed to fetch weather data: ${err.message}`;
+      renderError(errorMsg);
+      sendMessage({ type: 'tool:error', callId, error: errorMsg });
+    }
+  }
+
+  window.addEventListener('message', function(event) {
+    const msg = event.data;
+    if (!msg || !msg.type) return;
+
+    switch (msg.type) {
+      case 'app:init':
+        sessionId = msg.sessionId;
+        break;
+
+      case 'tool:invoke':
+        if (msg.toolName === 'lookup_weather' && msg.args?.location) {
+          lookupWeather(msg.args.location, msg.callId);
+        } else {
+          sendMessage({
+            type: 'tool:error',
+            callId: msg.callId,
+            error: `Unknown tool: ${msg.toolName}`,
+          });
+        }
+        break;
+
+      case 'state:request':
+        sendMessage({
+          type: 'state:response',
+          state: { sessionId },
+          description: 'Weather dashboard ready',
+        });
+        break;
+    }
+  });
+
+  // Signal ready
+  sendMessage({ type: 'app:ready' });
+})();
+</script>
+</body>
+</html>
