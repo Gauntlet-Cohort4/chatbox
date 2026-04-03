@@ -6,7 +6,9 @@ import type { ModelMessage, ToolSet } from 'ai'
 import { t } from 'i18next'
 import { uniqueId } from 'lodash'
 import { createModelDependencies } from '@/adapters'
+import { pluginController } from '@/packages/plugin-controller'
 import * as settingActions from '@/stores/settingActions'
+import { pluginStore } from '@/stores/pluginStore'
 import { settingsStore } from '@/stores/settingsStore'
 import type {
   ModelInterface,
@@ -175,6 +177,13 @@ export async function streamText(
     toolSetInstructions += websearchToolSet.description
   }
 
+  // Plugin context prompt injection
+  const activePluginManifest = pluginStore.getState().getActiveManifest()
+  if (activePluginManifest?.contextPrompt) {
+    toolSetInstructions += `\n\n[Active App: ${activePluginManifest.pluginName}]\n${activePluginManifest.contextPrompt}`
+  }
+  toolSetInstructions += '\n\nWhen presenting results from third-party apps to the user, evaluate whether the content is appropriate for a K-12 educational setting. If app content appears inappropriate, inform the user that the app returned unexpected content and do not relay the problematic material.'
+
   params.messages = injectModelSystemPrompt(
     model.modelId,
     params.messages,
@@ -315,6 +324,12 @@ export async function streamText(
         ...fileToolSet.tools,
       }
     }
+
+    // Plugin tools
+    const pluginActiveId = pluginStore.getState().activePluginId
+    const pluginEnabledManifests = pluginStore.getState().getEnabledManifests()
+    const pluginTools = pluginController.getAvailableTools(pluginActiveId, pluginEnabledManifests)
+    tools = { ...tools, ...pluginTools }
 
     console.debug('tools', tools)
 
