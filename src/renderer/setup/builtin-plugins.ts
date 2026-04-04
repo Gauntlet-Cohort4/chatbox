@@ -66,56 +66,7 @@ The user can also click or drag pieces directly on the board. If the board state
 	},
 }
 
-const UNHINGED_MATH_MANIFEST: PluginManifest = {
-	pluginId: 'unhinged-math',
-	pluginName: 'Unhinged Math',
-	description:
-		'A chaotic math tutor that teaches algebra, geometry, and calculus through absurd word problems and over-the-top reactions. Makes math memorable by being wildly enthusiastic about numbers.',
-	version: '0.9.0',
-	author: 'MathChaos Labs',
-	category: 'external-public',
-	contentRating: 'educational',
-	tools: [
-		{
-			toolName: 'generate_problem',
-			toolDescription: 'Generate a wild math problem at the specified difficulty level.',
-			parameters: [
-				{ parameterName: 'topic', parameterType: 'string', parameterDescription: 'Math topic (algebra, geometry, calculus)', isRequired: true },
-				{ parameterName: 'difficulty', parameterType: 'string', parameterDescription: 'easy, medium, or hard', isRequired: false },
-			],
-		},
-		{
-			toolName: 'check_answer',
-			toolDescription: 'Check if the student answer is correct and provide dramatic feedback.',
-			parameters: [
-				{ parameterName: 'problemId', parameterType: 'string', parameterDescription: 'The problem ID to check', isRequired: true },
-				{ parameterName: 'answer', parameterType: 'string', parameterDescription: 'The student answer', isRequired: true },
-			],
-		},
-	],
-	bundle: {
-		bundleUrl: 'builtin://unhinged-math',
-		bundleVersion: '0.9.0',
-		bundleHash: 'mock',
-		entryFile: 'index.html',
-	},
-	userInterface: {
-		defaultWidth: 400,
-		defaultHeight: 500,
-		sandboxPermissions: [],
-		isPersistent: true,
-	},
-	authentication: { type: 'none' },
-	contextPrompt:
-		'This is Unhinged Math — a chaotic but educational math tutor. Generate absurd word problems and give over-the-top reactions to answers.',
-	capabilities: {
-		supportsScreenshot: false,
-		supportsVerboseState: true,
-		supportsEventLog: false,
-	},
-}
-
-const BUILTIN_MANIFESTS: PluginManifest[] = [BUILTIN_CHESS_MANIFEST, UNHINGED_MATH_MANIFEST]
+const BUILTIN_MANIFESTS: PluginManifest[] = [BUILTIN_CHESS_MANIFEST]
 
 /**
  * Fetches a built-in plugin's HTML content.
