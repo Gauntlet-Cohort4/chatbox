@@ -9,6 +9,47 @@ This is the repository for the Chatbox Community Edition, open-sourced under the
 
 We regularly sync code from the pro repo to this repo, and vice versa.
 
+---
+
+## ChatBridge — Plugin Integration Layer
+
+This fork extends Chatbox with **ChatBridge**, a plugin system that allows interactive iframe-based apps to run alongside the AI chat. Designed for K-12 educational settings, it lets teachers deploy curated apps that students interact with while the LLM provides tutoring and analysis.
+
+### What ChatBridge adds
+
+- **Plugin architecture** — Typed postMessage bridge for bidirectional communication between sandboxed iframes and the LLM. Plugins declare tools via manifests, and the LLM can invoke them (e.g., making chess moves) or respond to plugin state changes.
+- **Side panel UI** — Plugins render in an iframe panel adjacent to the chat. The LLM sees plugin state (FEN strings, event logs, structured data) and can reason about what's happening in the app.
+- **Teacher controls** — A demo mode with teacher/student role switching. Teachers manage a plugin catalog with a three-stage approval workflow (Not Approved → Approved → Deployed). Students only see deployed plugins.
+- **App Store settings** — Teachers browse, approve, and deploy plugins from a settings panel with search, category filters, and detail modals.
+- **Built-in chess plugin** — A self-contained interactive chess game (chess.js + CSS grid board) with click-to-move, drag-and-drop, legal move indicators, check/checkmate detection, and full LLM integration for move suggestions and position analysis.
+- **Plugin catalog system** — Remote catalog polling with ETag/304 support, SHA-256 bundle verification, and local caching. Built-in plugins load at startup without needing a remote catalog.
+- **OAuth2 PKCE** — Authentication flow for third-party plugins (e.g., Spotify) with desktop deep link and web popup paths.
+- **300+ tests** across unit, integration, and manifest validation.
+
+### Plugin architecture overview
+
+```
+User types message
+  → LLM sees plugin tools (make_move, get_board_state, etc.)
+  → LLM calls tool → Controller emits on event bus
+  → Bridge forwards to iframe via postMessage
+  → Plugin processes and responds
+  → Bridge relays result back through event bus
+  → LLM receives result and responds to user
+```
+
+### Development
+
+```bash
+pnpm build:web          # Build web version (includes plugins)
+pnpm serve:web          # Serve locally with SPA + plugin support
+pnpm plugins:build      # Generate plugin catalog with hashes
+pnpm plugins:serve      # Serve plugin catalog for remote testing
+pnpm test               # Run all tests
+```
+
+---
+
 ### Download for Desktop
 
 <table style="width: 100%">
