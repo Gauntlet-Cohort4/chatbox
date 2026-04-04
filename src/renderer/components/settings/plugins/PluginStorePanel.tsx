@@ -1,7 +1,7 @@
-import { Badge, Box, Card, Group, SegmentedControl, SimpleGrid, Switch, Text, TextInput, Title } from '@mantine/core'
+import { Badge, Box, Button, Card, Group, SegmentedControl, SimpleGrid, Text, TextInput, Title } from '@mantine/core'
 import { useMemo, useState } from 'react'
 import { usePluginStore } from '@/stores/pluginStore'
-import { pluginStore } from '@/stores/pluginStore'
+import { pluginStore, type PluginApprovalStatus } from '@/stores/pluginStore'
 import type { PluginCatalogEntry } from '@shared/types/plugin'
 import { PluginDetailModal } from './PluginDetailModal'
 
@@ -11,6 +11,12 @@ const CATEGORY_COLORS: Record<string, string> = {
 	internal: 'blue',
 	'external-public': 'green',
 	'external-authenticated': 'orange',
+}
+
+const STATUS_CONFIG: Record<PluginApprovalStatus, { label: string; color: string; actionLabel: string; nextStatus: PluginApprovalStatus }> = {
+	'not-approved': { label: 'NOT APPROVED', color: 'red', actionLabel: 'Approve', nextStatus: 'approved' },
+	approved: { label: 'APPROVED', color: 'yellow', actionLabel: 'Deploy', nextStatus: 'deployed' },
+	deployed: { label: 'DEPLOYED', color: 'green', actionLabel: 'Revoke', nextStatus: 'approved' },
 }
 
 function truncateDescription(description: string, maxLength = 100): string {
@@ -28,7 +34,7 @@ function formatTimestamp(timestamp: number): string {
 
 export function PluginStorePanel() {
 	const catalog = usePluginStore((s) => s.catalog)
-	const enabledPluginIds = usePluginStore((s) => s.enabledPluginIds)
+	const approvalStatus = usePluginStore((s) => s.pluginApprovalStatus)
 	const [search, setSearch] = useState('')
 	const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('All')
 	const [selectedEntry, setSelectedEntry] = useState<PluginCatalogEntry | null>(null)
@@ -64,12 +70,16 @@ export function PluginStorePanel() {
 		)
 	}
 
-	const handleToggle = (pluginId: string, isCurrentlyEnabled: boolean) => {
-		if (isCurrentlyEnabled) {
-			pluginStore.getState().disablePlugin(pluginId)
-		} else {
-			pluginStore.getState().enablePlugin(pluginId)
-		}
+	const handleStatusAction = (pluginId: string, e: React.MouseEvent) => {
+		e.stopPropagation()
+		const currentStatus = approvalStatus[pluginId] ?? 'not-approved'
+		const config = STATUS_CONFIG[currentStatus]
+		pluginStore.getState().setApprovalStatus(pluginId, config.nextStatus)
+	}
+
+	const handleRevoke = (pluginId: string, e: React.MouseEvent) => {
+		e.stopPropagation()
+		pluginStore.getState().setApprovalStatus(pluginId, 'not-approved')
 	}
 
 	return (
@@ -103,7 +113,8 @@ export function PluginStorePanel() {
 
 			<SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} mt="md" spacing="md">
 				{filteredApps.map((app) => {
-					const isEnabled = enabledPluginIds.includes(app.pluginId)
+					const status = approvalStatus[app.pluginId] ?? 'not-approved'
+					const config = STATUS_CONFIG[status]
 					return (
 						<Card
 							key={app.pluginId}
@@ -111,26 +122,21 @@ export function PluginStorePanel() {
 							padding="md"
 							radius="md"
 							withBorder
-							style={{ cursor: 'pointer' }}
+							style={{ cursor: 'pointer', opacity: status === 'not-approved' ? 0.7 : 1 }}
 							onClick={() => setSelectedEntry(app)}
 						>
 							<Group justify="space-between" mb="xs">
 								<Text fw={600}>{app.pluginName}</Text>
-								<Switch
-									checked={isEnabled}
-									onChange={(e) => {
-										e.stopPropagation()
-										handleToggle(app.pluginId, isEnabled)
-									}}
-									onClick={(e) => e.stopPropagation()}
-								/>
+								<Badge color={config.color} variant="filled" size="sm">
+									{config.label}
+								</Badge>
 							</Group>
 
 							<Text size="sm" c="dimmed" mb="xs">
 								{truncateDescription(app.description)}
 							</Text>
 
-							<Group gap="xs" mb="xs">
+							<Group gap="xs" mb="sm">
 								<Badge color={CATEGORY_COLORS[app.category] ?? 'gray'} variant="light" size="sm">
 									{app.category}
 								</Badge>
@@ -144,9 +150,31 @@ export function PluginStorePanel() {
 								</Badge>
 							</Group>
 
-							<Text size="xs" c="dimmed">
-								{app.author}
-							</Text>
+							<Group gap="xs" justify="space-between">
+								<Text size="xs" c="dimmed">
+									{app.author}
+								</Text>
+								<Group gap="xs">
+									<Button
+										size="xs"
+										variant={status === 'deployed' ? 'light' : 'filled'}
+										color={status === 'deployed' ? 'red' : config.color === 'red' ? 'blue' : 'green'}
+										onClick={(e) => handleStatusAction(app.pluginId, e)}
+									>
+										{config.actionLabel}
+									</Button>
+									{status === 'deployed' && (
+										<Button
+											size="xs"
+											variant="subtle"
+											color="red"
+											onClick={(e) => handleRevoke(app.pluginId, e)}
+										>
+											Unapprove
+										</Button>
+									)}
+								</Group>
+							</Group>
 						</Card>
 					)
 				})}

@@ -91,6 +91,7 @@ describe('Plugin Lifecycle Integration', () => {
 			catalogVersion: null,
 			catalogLastFetched: null,
 			enabledPluginIds: [],
+			pluginApprovalStatus: {},
 			activePluginId: null,
 			pluginStates: {},
 			pluginStateDescriptions: {},
@@ -314,7 +315,9 @@ describe('Plugin Lifecycle Integration', () => {
 			)
 
 			vi.advanceTimersByTime(15001)
-			await expect(resultPromise).rejects.toThrow(/timed out/i)
+			const result = await resultPromise
+			expect(result).toHaveProperty('error')
+			expect((result as any).error).toMatch(/timed out/i)
 
 			controller.cleanup()
 			vi.useRealTimers()

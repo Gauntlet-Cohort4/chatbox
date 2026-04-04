@@ -179,7 +179,7 @@ describe('pluginController', () => {
 			expect(result).toEqual({ fen: 'new' })
 		})
 
-		it('active tool execute rejects after 15 second timeout', async () => {
+		it('active tool execute returns error object after 15 second timeout', async () => {
 			vi.useFakeTimers()
 			const controller = createPluginController(testEventBus)
 			const manifest = createTestManifest()
@@ -189,11 +189,13 @@ describe('pluginController', () => {
 
 			vi.advanceTimersByTime(15001)
 
-			await expect(executePromise).rejects.toThrow(/timed out/i)
+			const result = await executePromise
+			expect(result).toHaveProperty('error')
+			expect((result as any).error).toMatch(/timed out/i)
 			vi.useRealTimers()
 		})
 
-		it('tool:error-received rejects the pending promise', async () => {
+		it('tool:error-received returns error object to resolve', async () => {
 			const controller = createPluginController(testEventBus)
 			const manifest = createTestManifest()
 			const tools = controller.getAvailableTools('chess', [manifest])
@@ -206,7 +208,9 @@ describe('pluginController', () => {
 			const callId = Array.from((controller as any).pendingToolCalls.keys())[0]
 			testEventBus.emit('tool:error-received', { pluginId: 'chess', callId, error: 'Invalid move' })
 
-			await expect(executePromise).rejects.toThrow('Invalid move')
+			const result = await executePromise
+			expect(result).toHaveProperty('error')
+			expect((result as any).error).toBe('Invalid move')
 		})
 
 		it('tool:result-received with unknown callId does not throw', () => {
@@ -266,7 +270,7 @@ describe('pluginController', () => {
 	})
 
 	describe('cleanup', () => {
-		it('rejects all pending tool call promises', async () => {
+		it('resolves pending tool calls with error on cleanup', async () => {
 			const controller = createPluginController(testEventBus)
 			const manifest = createTestManifest()
 			const tools = controller.getAvailableTools('chess', [manifest])
@@ -276,7 +280,9 @@ describe('pluginController', () => {
 			await new Promise((r) => setTimeout(r, 10))
 			controller.cleanup()
 
-			await expect(executePromise).rejects.toThrow(/shutting down/i)
+			const result = await executePromise
+			expect(result).toHaveProperty('error')
+			expect((result as any).error).toMatch(/shutting down/i)
 		})
 
 		it('rejects all pending ready promises', async () => {

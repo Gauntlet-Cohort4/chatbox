@@ -2,6 +2,7 @@ import { startCatalogPolling } from '@/packages/plugin-catalog/fetcher'
 import { pluginEventBus } from '@/packages/plugin-event-bus'
 import { pluginStore } from '@/stores/pluginStore'
 import { initSettingsStore } from '@/stores/settingsStore'
+import { registerBuiltinPlugins } from './builtin-plugins'
 
 let cleanupPolling: (() => void) | null = null
 
@@ -16,6 +17,11 @@ pluginEventBus.on('plugin:event-log', (data) => {
 
 pluginEventBus.on('plugin:state-update', (data) => {
 	pluginStore.getState().updatePluginState(data.pluginId, data.state, data.description)
+})
+
+// Register built-in plugins (chess, etc.) so they work without a remote catalog
+registerBuiltinPlugins().catch((err) => {
+	console.error('[plugin-bootstrap] Failed to register built-in plugins:', err)
 })
 
 initSettingsStore()
