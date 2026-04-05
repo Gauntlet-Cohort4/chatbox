@@ -55,6 +55,7 @@ export function createPluginController(eventBus: Emittery<PluginEventMap> = plug
 	const pendingToolCalls = new Map<string, PendingCall>()
 	const pendingReadyPromises = new Map<string, PendingCall>()
 	const pendingScreenshotPromises = new Map<string, PendingCall>()
+	let pendingScreenshotKeys: string[] = []
 	const unsubscribers: Array<() => void> = []
 
 	// Subscribe to event bus
@@ -157,7 +158,9 @@ export function createPluginController(eventBus: Emittery<PluginEventMap> = plug
 								}, TOOL_TIMEOUT_MS)
 								pendingScreenshotPromises.set(manifest.pluginId, {
 									resolve: (storageKeys) => {
-										resolve({ screenshotsCaptured: (storageKeys as string[]).length })
+										const keys = storageKeys as string[]
+										pendingScreenshotKeys = [...pendingScreenshotKeys, ...keys]
+										resolve({ screenshotsCaptured: keys.length })
 									},
 									reject,
 									timeoutHandle,
@@ -225,9 +228,16 @@ export function createPluginController(eventBus: Emittery<PluginEventMap> = plug
 		unsubscribers.length = 0
 	}
 
+	function consumePendingScreenshots(): string[] {
+		const keys = [...pendingScreenshotKeys]
+		pendingScreenshotKeys = []
+		return keys
+	}
+
 	return {
 		getAvailableTools,
 		cleanup,
+		consumePendingScreenshots,
 		// Expose for testing
 		pendingToolCalls,
 		pendingReadyPromises,

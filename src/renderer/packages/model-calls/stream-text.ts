@@ -7,6 +7,7 @@ import { t } from 'i18next'
 import { uniqueId } from 'lodash'
 import { createModelDependencies } from '@/adapters'
 import { buildPluginContextForLLM } from '@/packages/plugin-context/builder'
+import { injectScreenshotsIntoUserMessage } from '@/packages/plugin-context/screenshot-injector'
 import { pluginController } from '@/packages/plugin-controller'
 import * as settingActions from '@/stores/settingActions'
 import { pluginStore } from '@/stores/pluginStore'
@@ -335,6 +336,16 @@ export async function streamText(
     const pluginEnabledManifests = pluginStore.getState().getEnabledManifests()
     const pluginTools = pluginController.getAvailableTools(pluginActiveId, pluginEnabledManifests)
     tools = { ...tools, ...pluginTools }
+
+    // Inject pending plugin screenshots into the last user message
+    const pendingScreenshots = pluginController.consumePendingScreenshots?.()
+    if (pendingScreenshots && pendingScreenshots.length > 0 && params.messages.length > 0) {
+      const lastUserMsgIndex = [...params.messages].reverse().findIndex((m) => m.role === 'user')
+      if (lastUserMsgIndex >= 0) {
+        const actualIndex = params.messages.length - 1 - lastUserMsgIndex
+        params.messages[actualIndex] = injectScreenshotsIntoUserMessage(pendingScreenshots, params.messages[actualIndex])
+      }
+    }
 
     console.debug('tools', tools)
 
