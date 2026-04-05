@@ -1,5 +1,6 @@
 import type { PluginBundle } from '@shared/types/plugin'
 import platform from '@/platform'
+import { logPluginEvent } from '@/packages/plugin-logger/logger'
 import { pluginStore } from '@/stores/pluginStore'
 
 const BUNDLE_STORAGE_PREFIX = 'plugin-bundle:'
@@ -17,17 +18,20 @@ export async function downloadBundle(
 	bundleUrl: string,
 	expectedHash: string
 ): Promise<void> {
+	logPluginEvent('bundle_download_start', pluginId, { bundleUrl })
 	const response = await fetch(bundleUrl)
 	const content = await response.text()
 
 	const actualHash = await computeSha256(content)
 	if (actualHash !== expectedHash) {
+		logPluginEvent('bundle_hash_mismatch', pluginId, { expected: expectedHash, actual: actualHash })
 		throw new Error(
 			`Bundle hash mismatch for plugin "${pluginId}": expected ${expectedHash}, got ${actualHash}`
 		)
 	}
 
 	await platform.setStoreBlob(`${BUNDLE_STORAGE_PREFIX}${pluginId}`, content)
+	logPluginEvent('bundle_download_success', pluginId, { size: content.length })
 }
 
 export function getLocalPluginUrl(pluginId: string, entryFile: string): string | Promise<string> {

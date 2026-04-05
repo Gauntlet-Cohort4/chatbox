@@ -1,5 +1,6 @@
 import type { PluginAuthConfig, PluginManifest } from '@shared/types/plugin'
 import { pluginStore } from '@/stores/pluginStore'
+import { logPluginEvent } from '@/packages/plugin-logger/logger'
 import platform from '@/platform'
 import {
 	generateCodeVerifier,
@@ -105,6 +106,7 @@ function waitForWebPopupCallback(
 }
 
 export async function startOAuthFlow(manifest: PluginManifest): Promise<TokenResponse> {
+	logPluginEvent('auth_flow_start', manifest.pluginId)
 	const auth = manifest.authentication
 	if (auth.type !== 'oauth2-pkce') {
 		throw new Error(`Expected oauth2-pkce authentication, got ${auth.type}`)
@@ -134,7 +136,13 @@ export async function startOAuthFlow(manifest: PluginManifest): Promise<TokenRes
 		throw new Error('OAuth state mismatch — possible CSRF attack')
 	}
 
-	const tokenResponse = await exchangeCodeForToken(config, callbackResult.code, codeVerifier, redirectUri)
+	let tokenResponse: TokenResponse
+	try {
+		tokenResponse = await exchangeCodeForToken(config, callbackResult.code, codeVerifier, redirectUri)
+	} catch (err) {
+		logPluginEvent('auth_flow_failure', manifest.pluginId, { error: String(err) })
+		throw err
+	}
 
 	pluginStore.getState().setPluginToken(manifest.pluginId, {
 		accessToken: tokenResponse.accessToken,
@@ -142,6 +150,7 @@ export async function startOAuthFlow(manifest: PluginManifest): Promise<TokenRes
 		...(tokenResponse.expiresAt != null ? { expiresAt: tokenResponse.expiresAt } : {}),
 	})
 
+	logPluginEvent('auth_flow_success', manifest.pluginId)
 	return tokenResponse
 }
 

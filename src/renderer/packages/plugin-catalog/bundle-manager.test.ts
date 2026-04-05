@@ -7,6 +7,7 @@ vi.mock('@/platform', () => ({
 		setStoreBlob: vi.fn().mockResolvedValue(undefined),
 		getStoreBlob: vi.fn().mockResolvedValue(null),
 		delStoreBlob: vi.fn().mockResolvedValue(undefined),
+		appLog: vi.fn(),
 	},
 }))
 

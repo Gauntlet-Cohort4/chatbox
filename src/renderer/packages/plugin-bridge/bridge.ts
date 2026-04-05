@@ -8,6 +8,7 @@ import {
 import type { PluginManifest } from '@shared/types/plugin'
 import type { PluginEventMap } from '@shared/types/plugin-events'
 import { pluginEventBus } from '@/packages/plugin-event-bus'
+import { logPluginEvent } from '@/packages/plugin-logger/logger'
 
 const RATE_LIMIT_MAX = 100
 const RATE_LIMIT_WINDOW_MS = 1000
@@ -98,11 +99,13 @@ export class PluginBridge {
 	handleMessage(event: MessageEvent): void {
 		const parsed = AppToPlatformMessageSchema.safeParse(event.data)
 		if (!parsed.success) {
+			logPluginEvent('message_validation_failure', this.pluginId, { error: String(parsed.error) })
 			console.warn('[PluginBridge] Invalid message received:', parsed.error)
 			return
 		}
 
 		if (this.isRateLimited()) {
+			logPluginEvent('message_rate_limited', this.pluginId)
 			return
 		}
 
