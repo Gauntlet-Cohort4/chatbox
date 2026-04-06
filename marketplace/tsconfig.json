@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "module": "ESNext",
+    "lib": ["DOM", "DOM.Iterable", "ES2023"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "sourceMap": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "types": ["vite/client", "@cloudflare/workers-types"],
+    "baseUrl": ".",
+    "paths": {
+      "@marketplace/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*", "worker/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
