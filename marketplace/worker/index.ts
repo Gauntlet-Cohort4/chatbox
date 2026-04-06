@@ -2,6 +2,7 @@
  * Cloudflare Worker entry point for the ChatBridge Marketplace API.
  */
 import { handlePreflight, withCors } from './middleware/cors'
+import { enforceCsrf } from './middleware/csrf'
 import { notFound, serverError } from './lib/responses'
 import { Router } from './router'
 import {
@@ -130,6 +131,10 @@ export default {
     // Preflight
     const preflight = handlePreflight(request, env)
     if (preflight) return preflight
+
+    // CSRF: reject state-changing requests from unexpected origins
+    const csrfRejection = enforceCsrf(request, env)
+    if (csrfRejection) return withCors(csrfRejection, request, env)
 
     let response: Response
     try {
