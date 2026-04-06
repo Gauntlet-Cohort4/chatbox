@@ -6,6 +6,7 @@ import { Layout } from './components/Layout'
 import { useAuth } from './hooks/useAuth'
 import { useCodeExchange } from './hooks/useCodeExchange'
 import { BrowsePage } from './pages/BrowsePage'
+import { ClassroomPage } from './pages/ClassroomPage'
 import { PluginDetailPage } from './pages/PluginDetailPage'
 
 function PlaceholderPage({ title }: { title: string }) {
@@ -48,7 +49,7 @@ function AppInner() {
           path="/classroom"
           element={
             <AuthGuard auth={auth}>
-              <PlaceholderPage title="My Classroom" />
+              <ClassroomPage auth={auth} />
             </AuthGuard>
           }
         />
