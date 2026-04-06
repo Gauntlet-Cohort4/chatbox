@@ -11,6 +11,7 @@ import {
   rejectSubmission,
   resolveReport,
 } from './routes/admin'
+import { exchangeCode, generateExchangeCode, getMe, logout } from './routes/auth'
 import {
   getPluginDetail,
   getPluginImage,
@@ -20,6 +21,8 @@ import {
 } from './routes/marketplace'
 import { createReport } from './routes/reports'
 import { createReview, listReviews, updateReview } from './routes/reviews'
+import { registerTeacher } from './routes/teachers'
+import { authQueries } from './db/queries'
 import type { Env } from './types'
 
 export function buildRouter(): Router {
@@ -72,6 +75,13 @@ export function buildRouter(): Router {
     resolveReport(request, env, { reportId: params.reportId })
   )
 
+  // Teacher registration + auth routes
+  router.post('/teachers/register', (request, env) => registerTeacher(request, env))
+  router.post('/auth/exchange-code', (request, env) => generateExchangeCode(request, env))
+  router.post('/auth/exchange', (request, env) => exchangeCode(request, env))
+  router.get('/auth/me', (request, env) => getMe(request, env))
+  router.post('/auth/logout', (request, env) => logout(request, env))
+
   return router
 }
 
@@ -93,5 +103,12 @@ export default {
     }
 
     return withCors(response, request, env)
+  },
+
+  /** Scheduled cleanup: remove expired sessions and exchange codes daily. */
+  async scheduled(_event: ScheduledController, env: Env, _ctx: ExecutionContext): Promise<void> {
+    const now = Date.now()
+    await authQueries.deleteExpiredSessions(env.DB, now)
+    await authQueries.deleteExpiredCodes(env.DB, now)
   },
 } satisfies ExportedHandler<Env>
