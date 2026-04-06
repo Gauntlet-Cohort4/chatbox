@@ -9,8 +9,14 @@ function doFetch(
   path: string,
   init: RequestInit = {}
 ): Promise<Response> {
+  const headers = new Headers(init.headers)
+  if (!headers.has('Origin')) headers.set('Origin', 'http://localhost:5174')
   return Promise.resolve(
-    workerHandler.fetch(new Request(`http://test.local${path}`, init), harness.env, createExecutionContext())
+    workerHandler.fetch(
+      new Request(`http://test.local${path}`, { ...init, headers }),
+      harness.env,
+      createExecutionContext()
+    )
   )
 }
 

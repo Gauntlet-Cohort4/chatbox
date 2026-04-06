@@ -42,6 +42,18 @@ export function createExecutionContext(): ExecutionContext {
 }
 
 /**
+ * Build a test Request that always includes a trusted Origin header so
+ * the CSRF middleware does not block state-changing requests.
+ */
+export function testRequest(url: string, init: RequestInit = {}): Request {
+  const headers = new Headers(init.headers)
+  if (!headers.has('Origin')) {
+    headers.set('Origin', 'http://localhost:5174')
+  }
+  return new Request(url, { ...init, headers })
+}
+
+/**
  * Seed a session row and return a `Cookie: session=...` header value.
  */
 export async function createSessionCookie(
