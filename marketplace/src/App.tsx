@@ -8,6 +8,8 @@ import { useCodeExchange } from './hooks/useCodeExchange'
 import { BrowsePage } from './pages/BrowsePage'
 import { ClassroomPage } from './pages/ClassroomPage'
 import { PluginDetailPage } from './pages/PluginDetailPage'
+import { SubmitConfirmationPage } from './pages/SubmitConfirmationPage'
+import { SubmitPage } from './pages/SubmitPage'
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -53,7 +55,8 @@ function AppInner() {
             </AuthGuard>
           }
         />
-        <Route path="/submit" element={<PlaceholderPage title="Submit Plugin" />} />
+        <Route path="/submit" element={<SubmitPage />} />
+        <Route path="/submit/success" element={<SubmitConfirmationPage />} />
         <Route path="/admin" element={<PlaceholderPage title="Admin Panel" />} />
       </Routes>
     </Layout>
