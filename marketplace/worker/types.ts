@@ -7,6 +7,7 @@ export interface Env {
   ADMIN_TOKEN: string
   SESSION_SECRET: string
   ENVIRONMENT: string
+  ALLOWED_ORIGINS?: string
 }
 
 /** Request with attached teacher context from auth middleware */
