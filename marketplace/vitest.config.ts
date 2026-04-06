@@ -9,6 +9,9 @@ export default defineConfig({
     globals: true,
     include: ['tests/**/*.test.{ts,tsx}'],
     setupFiles: ['./tests/setup.ts'],
+    // 5s per test is plenty — worker tests finish in <100ms; anything slower
+    // indicates a real problem (infinite loop, hung fetch, unclosed resource).
+    testTimeout: 5000,
   },
   resolve: {
     alias: {
