@@ -5,9 +5,11 @@ import { AuthGuard } from './components/AuthGuard'
 import { Layout } from './components/Layout'
 import { useAuth } from './hooks/useAuth'
 import { useCodeExchange } from './hooks/useCodeExchange'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { AdminPage } from './pages/AdminPage'
 import { BrowsePage } from './pages/BrowsePage'
 import { ClassroomPage } from './pages/ClassroomPage'
+import { NotFoundPage } from './pages/NotFoundPage'
 import { PluginDetailPage } from './pages/PluginDetailPage'
 import { SubmitConfirmationPage } from './pages/SubmitConfirmationPage'
 import { SubmitPage } from './pages/SubmitPage'
@@ -50,6 +52,7 @@ function AppInner() {
         <Route path="/submit" element={<SubmitPage />} />
         <Route path="/submit/success" element={<SubmitConfirmationPage />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Layout>
   )
@@ -57,8 +60,10 @@ function AppInner() {
 
 export function App() {
   return (
-    <BrowserRouter>
-      <AppInner />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AppInner />
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }
