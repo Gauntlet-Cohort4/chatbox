@@ -22,6 +22,12 @@ export type PluginLogEventType =
   | 'bundle_hash_mismatch'
   | 'message_validation_failure'
   | 'message_rate_limited'
+  | 'marketplace_poll_applied'
+  | 'marketplace_poll_unchanged'
+  | 'marketplace_poll_not_found'
+  | 'marketplace_poll_failure'
+  | 'marketplace_register'
+  | 'marketplace_exchange_code'
 
 const WARN_SUFFIXES = ['error', 'failure', 'mismatch', 'timeout'] as const
 
