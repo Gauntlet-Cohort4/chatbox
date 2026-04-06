@@ -10,7 +10,9 @@ async function fetchJson<T = unknown>(
   path: string,
   init: RequestInit = {}
 ): Promise<{ status: number; body: T }> {
-  const request = new Request(`http://test.local${path}`, init)
+  const headers = new Headers(init.headers)
+  if (!headers.has('Origin')) headers.set('Origin', 'http://localhost:5174')
+  const request = new Request(`http://test.local${path}`, { ...init, headers })
   const response = await workerHandler.fetch(request, harness.env, createExecutionContext())
   const text = await response.text()
   let body: unknown = null
