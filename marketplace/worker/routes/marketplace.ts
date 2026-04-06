@@ -1,10 +1,11 @@
 /**
- * Public marketplace routes: browse, detail, submission, images, categories.
+ * Public marketplace routes: browse, detail, submission, images, bundles, categories.
  */
 import { nanoid } from 'nanoid'
 import type { z } from 'zod'
 import { pluginQueries, type PluginRow, type PluginSortKey } from '../db/queries'
 import { badRequest, conflict, json, notFound, serverError } from '../lib/responses'
+import { getBundle, getScreenshot, putBundle, putScreenshot, UnsafeKeyError } from '../r2/storage'
 import { PluginSubmissionSchema } from '../schemas/submission'
 import type { Env } from '../types'
 
@@ -56,12 +57,44 @@ export async function getPluginImage(
   const row = await pluginQueries.getApprovedById(env.DB, params.pluginId)
   if (!row || !row.screenshotKey) return notFound('Screenshot not found')
 
-  const object = await env.BUCKET.get(row.screenshotKey)
-  if (!object) return notFound('Screenshot asset missing')
+  let result: { body: ReadableStream; contentType: string } | null
+  try {
+    result = await getScreenshot(env, params.pluginId)
+  } catch (err) {
+    if (err instanceof UnsafeKeyError) return badRequest('Invalid plugin id')
+    throw err
+  }
+  if (!result) return notFound('Screenshot asset missing')
 
   const headers = new Headers()
-  headers.set('Content-Type', object.httpMetadata?.contentType ?? 'image/png')
+  headers.set('Content-Type', result.contentType)
   headers.set('Cache-Control', 'public, max-age=86400')
+  return new Response(result.body, { headers })
+}
+
+// GET /marketplace/plugins/:pluginId/bundle
+export async function getPluginBundle(
+  _request: Request,
+  env: Env,
+  params: { pluginId: string }
+): Promise<Response> {
+  const row = await pluginQueries.getApprovedById(env.DB, params.pluginId)
+  if (!row) return notFound('Plugin not found')
+
+  let object: R2ObjectBody | null
+  try {
+    object = await getBundle(env, row.pluginId, row.bundleVersion)
+  } catch (err) {
+    if (err instanceof UnsafeKeyError) return badRequest('Invalid plugin id or version')
+    throw err
+  }
+  if (!object) return notFound('Bundle asset missing')
+
+  const headers = new Headers()
+  headers.set('Content-Type', 'application/zip')
+  headers.set('Content-Disposition', `attachment; filename="${row.pluginId}-${row.bundleVersion}.zip"`)
+  headers.set('Cache-Control', 'public, max-age=3600')
+  if (row.bundleSizeBytes) headers.set('Content-Length', String(row.bundleSizeBytes))
   return new Response(object.body, { headers })
 }
 
@@ -117,29 +150,28 @@ export async function submitPlugin(request: Request, env: Env): Promise<Response
   }
 
   const pluginId = `plugin_${nanoid(10)}`
-  if (!isSafeR2Key(pluginId)) return serverError('pluginId generation produced unsafe key')
-
   const bundleBytes = await bundleFile.arrayBuffer()
   const bundleHash = await computeSha256Hex(bundleBytes)
   const bundleVersion = manifest.version
-  const bundleUrl = `bundles/${pluginId}/${bundleVersion}/bundle.zip`
 
+  let bundleUrl: string
   try {
-    await env.BUCKET.put(bundleUrl, bundleBytes, {
-      httpMetadata: { contentType: 'application/zip' },
-    })
-  } catch {
+    bundleUrl = await putBundle(env, pluginId, bundleVersion, bundleBytes)
+  } catch (err) {
+    if (err instanceof UnsafeKeyError) return badRequest('Invalid bundle version format')
     return serverError('Failed to store bundle')
   }
 
-  let screenshotKey: string | null = null
+  let screenshotStorageKey: string | null = null
   if (screenshotFile instanceof File) {
-    screenshotKey = `screenshots/${pluginId}/screenshot.png`
     const screenshotBytes = await screenshotFile.arrayBuffer()
     try {
-      await env.BUCKET.put(screenshotKey, screenshotBytes, {
-        httpMetadata: { contentType: screenshotFile.type || 'image/png' },
-      })
+      screenshotStorageKey = await putScreenshot(
+        env,
+        pluginId,
+        screenshotBytes,
+        screenshotFile.type || 'image/png'
+      )
     } catch {
       return serverError('Failed to store screenshot')
     }
@@ -163,7 +195,7 @@ export async function submitPlugin(request: Request, env: Env): Promise<Response
     bundleVersion,
     bundleHash,
     bundleSizeBytes: bundleFile.size,
-    screenshotKey,
+    screenshotKey: screenshotStorageKey,
     submissionStatus: 'pending',
     submittedAt: Date.now(),
     reviewedAt: null,
@@ -206,9 +238,4 @@ async function computeSha256Hex(bytes: ArrayBuffer): Promise<string> {
   const hashBuffer = await crypto.subtle.digest('SHA-256', bytes)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
-}
-
-const SAFE_KEY_PATTERN = /^[A-Za-z0-9_\-.]+$/
-function isSafeR2Key(id: string): boolean {
-  return SAFE_KEY_PATTERN.test(id)
 }
