@@ -27,11 +27,18 @@ import type { ReactNode } from 'react'
 import type { PluginCatalog, PluginCatalogEntry } from '@shared/types/plugin'
 
 // Mock store state
+// NOTE: pluginApprovalStatus and setApprovalStatus were added when the panel
+// switched to the three-state approval workflow (not-approved → approved →
+// deployed). The component reads pluginApprovalStatus on every card render,
+// so omitting it from the mock causes "Cannot read properties of undefined"
+// errors before any test assertions can run.
 const mockStoreState = {
 	catalog: null as PluginCatalog | null,
 	enabledPluginIds: [] as string[],
+	pluginApprovalStatus: {} as Record<string, 'not-approved' | 'approved' | 'deployed'>,
 	enablePlugin: vi.fn(),
 	disablePlugin: vi.fn(),
+	setApprovalStatus: vi.fn(),
 }
 
 vi.mock('@/stores/pluginStore', () => ({
@@ -40,6 +47,13 @@ vi.mock('@/stores/pluginStore', () => ({
 		subscribe: vi.fn(() => vi.fn()),
 	},
 	usePluginStore: (selector: (state: typeof mockStoreState) => unknown) => selector(mockStoreState),
+}))
+
+// PluginDetailModal opens via internal state when a card is clicked. We don't
+// exercise the modal in this file, so stub it to avoid pulling in its full
+// dependency tree.
+vi.mock('./PluginDetailModal', () => ({
+	PluginDetailModal: () => null,
 }))
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -98,8 +112,10 @@ describe('PluginStorePanel', () => {
 	beforeEach(() => {
 		mockStoreState.catalog = null
 		mockStoreState.enabledPluginIds = []
+		mockStoreState.pluginApprovalStatus = {}
 		mockStoreState.enablePlugin.mockClear()
 		mockStoreState.disablePlugin.mockClear()
+		mockStoreState.setApprovalStatus.mockClear()
 	})
 
 	afterEach(() => {
@@ -157,13 +173,16 @@ describe('PluginStorePanel', () => {
 		expect(screen.getByText('Verified')).toBeDefined()
 	})
 
-	it('each card has enable/disable toggle', async () => {
-		const entry = createTestEntry({ pluginId: 'toggle-app' })
+	it('each card renders an approval action button', async () => {
+		// The panel renders the action button labeled by STATUS_CONFIG for the
+		// current approval status. Plugins default to 'not-approved', so the
+		// label should be "Approve".
+		const entry = createTestEntry({ pluginId: 'action-app' })
 		mockStoreState.catalog = createTestCatalog([entry])
 		const { PluginStorePanel } = await import('./PluginStorePanel')
 		render(<PluginStorePanel />, { wrapper })
-		const toggles = screen.getAllByRole('switch')
-		expect(toggles.length).toBe(1)
+		const buttons = screen.getAllByRole('button', { name: 'Approve' })
+		expect(buttons.length).toBe(1)
 	})
 
 	it('search input filters apps by pluginName (case-insensitive)', async () => {
@@ -221,26 +240,52 @@ describe('PluginStorePanel', () => {
 		expect(screen.getByText('External App')).toBeDefined()
 	})
 
-	it('enable toggle calls pluginStore.enablePlugin with correct pluginId', async () => {
-		const entry = createTestEntry({ pluginId: 'enable-me' })
+	it('clicking Approve on a not-approved plugin transitions it to approved', async () => {
+		const entry = createTestEntry({ pluginId: 'approve-me' })
 		mockStoreState.catalog = createTestCatalog([entry])
-		mockStoreState.enabledPluginIds = []
+		// Default approval status is 'not-approved', so the button reads "Approve"
+		// and clicking it should transition to 'approved'.
 		const { PluginStorePanel } = await import('./PluginStorePanel')
 		render(<PluginStorePanel />, { wrapper })
-		const toggles = screen.getAllByRole('switch')
-		fireEvent.click(toggles[0])
-		expect(mockStoreState.enablePlugin).toHaveBeenCalledWith('enable-me')
+		const button = screen.getByRole('button', { name: 'Approve' })
+		fireEvent.click(button)
+		expect(mockStoreState.setApprovalStatus).toHaveBeenCalledWith('approve-me', 'approved')
 	})
 
-	it('disable toggle calls pluginStore.disablePlugin with correct pluginId', async () => {
-		const entry = createTestEntry({ pluginId: 'disable-me' })
+	it('clicking Deploy on an approved plugin transitions it to deployed', async () => {
+		const entry = createTestEntry({ pluginId: 'deploy-me' })
 		mockStoreState.catalog = createTestCatalog([entry])
-		mockStoreState.enabledPluginIds = ['disable-me']
+		mockStoreState.pluginApprovalStatus = { 'deploy-me': 'approved' }
 		const { PluginStorePanel } = await import('./PluginStorePanel')
 		render(<PluginStorePanel />, { wrapper })
-		const toggles = screen.getAllByRole('switch')
-		fireEvent.click(toggles[0])
-		expect(mockStoreState.disablePlugin).toHaveBeenCalledWith('disable-me')
+		const button = screen.getByRole('button', { name: 'Deploy' })
+		fireEvent.click(button)
+		expect(mockStoreState.setApprovalStatus).toHaveBeenCalledWith('deploy-me', 'deployed')
+	})
+
+	it('clicking Revoke on a deployed plugin transitions it back to approved', async () => {
+		const entry = createTestEntry({ pluginId: 'revoke-me' })
+		mockStoreState.catalog = createTestCatalog([entry])
+		mockStoreState.pluginApprovalStatus = { 'revoke-me': 'deployed' }
+		const { PluginStorePanel } = await import('./PluginStorePanel')
+		render(<PluginStorePanel />, { wrapper })
+		// Deployed plugins show a primary "Revoke" button (back to approved) AND
+		// a subtle "Unapprove" button (back to not-approved). The primary action
+		// is the Revoke button.
+		const button = screen.getByRole('button', { name: 'Revoke' })
+		fireEvent.click(button)
+		expect(mockStoreState.setApprovalStatus).toHaveBeenCalledWith('revoke-me', 'approved')
+	})
+
+	it('clicking Unapprove on a deployed plugin transitions it to not-approved', async () => {
+		const entry = createTestEntry({ pluginId: 'unapprove-me' })
+		mockStoreState.catalog = createTestCatalog([entry])
+		mockStoreState.pluginApprovalStatus = { 'unapprove-me': 'deployed' }
+		const { PluginStorePanel } = await import('./PluginStorePanel')
+		render(<PluginStorePanel />, { wrapper })
+		const button = screen.getByRole('button', { name: 'Unapprove' })
+		fireEvent.click(button)
+		expect(mockStoreState.setApprovalStatus).toHaveBeenCalledWith('unapprove-me', 'not-approved')
 	})
 
 	it('shows catalog version and last updated timestamp', async () => {
