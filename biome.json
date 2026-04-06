@@ -6,7 +6,8 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignoreUnknown": true
+    "ignoreUnknown": true,
+    "includes": ["**", "!.claude/worktrees/**", "!node_modules/**", "!dist/**", "!out/**"]
   },
   "formatter": {
     "enabled": true,
