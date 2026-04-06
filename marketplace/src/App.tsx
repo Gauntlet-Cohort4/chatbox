@@ -5,6 +5,7 @@ import { AuthGuard } from './components/AuthGuard'
 import { Layout } from './components/Layout'
 import { useAuth } from './hooks/useAuth'
 import { useCodeExchange } from './hooks/useCodeExchange'
+import { BrowsePage } from './pages/BrowsePage'
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -40,7 +41,7 @@ function AppInner() {
   return (
     <Layout auth={auth}>
       <Routes>
-        <Route path="/" element={<PlaceholderPage title="Browse Marketplace" />} />
+        <Route path="/" element={<BrowsePage />} />
         <Route path="/plugin/:pluginId" element={<PlaceholderPage title="Plugin Detail" />} />
         <Route
           path="/classroom"
