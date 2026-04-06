@@ -20,7 +20,16 @@ if (!root) throw new Error('Root element not found')
 
 createRoot(root).render(
   <StrictMode>
-    <MantineProvider theme={theme} defaultColorScheme="auto">
+    {/*
+      Force light color scheme for now. The previous "auto" setting picked up
+      the OS dark mode preference, but our custom global.css only declared
+      dark variables under a `.dark` class that Mantine never applies (Mantine
+      uses [data-mantine-color-scheme="dark"] on <html>). The result was dark
+      Mantine components rendered on a white body background with low-contrast
+      text and light-on-light Alerts. Locking to light avoids the half-broken
+      mismatch; a proper dark theme can be added later.
+    */}
+    <MantineProvider theme={theme} defaultColorScheme="light" forceColorScheme="light">
       <ModalsProvider>
         <Notifications position="top-right" />
         <App />
