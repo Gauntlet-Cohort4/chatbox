@@ -31,6 +31,8 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250327.0",
     "@testing-library/jest-dom": "^6.6.3",
+    "@types/sql.js": "^1.4.9",
+    "sql.js": "^1.13.0",
     "@testing-library/react": "^16.1.0",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
