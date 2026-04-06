@@ -6,6 +6,7 @@ import { Layout } from './components/Layout'
 import { useAuth } from './hooks/useAuth'
 import { useCodeExchange } from './hooks/useCodeExchange'
 import { BrowsePage } from './pages/BrowsePage'
+import { PluginDetailPage } from './pages/PluginDetailPage'
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -42,7 +43,7 @@ function AppInner() {
     <Layout auth={auth}>
       <Routes>
         <Route path="/" element={<BrowsePage />} />
-        <Route path="/plugin/:pluginId" element={<PlaceholderPage title="Plugin Detail" />} />
+        <Route path="/plugin/:pluginId" element={<PluginDetailPage auth={auth} />} />
         <Route
           path="/classroom"
           element={
