@@ -5,20 +5,12 @@ import { AuthGuard } from './components/AuthGuard'
 import { Layout } from './components/Layout'
 import { useAuth } from './hooks/useAuth'
 import { useCodeExchange } from './hooks/useCodeExchange'
+import { AdminPage } from './pages/AdminPage'
 import { BrowsePage } from './pages/BrowsePage'
 import { ClassroomPage } from './pages/ClassroomPage'
 import { PluginDetailPage } from './pages/PluginDetailPage'
 import { SubmitConfirmationPage } from './pages/SubmitConfirmationPage'
 import { SubmitPage } from './pages/SubmitPage'
-
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <div>
-      <h1>{title}</h1>
-      <p>Coming soon...</p>
-    </div>
-  )
-}
 
 function AppInner() {
   const auth = useAuth()
@@ -57,7 +49,7 @@ function AppInner() {
         />
         <Route path="/submit" element={<SubmitPage />} />
         <Route path="/submit/success" element={<SubmitConfirmationPage />} />
-        <Route path="/admin" element={<PlaceholderPage title="Admin Panel" />} />
+        <Route path="/admin" element={<AdminPage />} />
       </Routes>
     </Layout>
   )
