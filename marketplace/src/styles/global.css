@@ -85,23 +85,16 @@
   --chatbox-radius-xxl: 24px;
 }
 
-/* Dark mode defaults */
-.dark {
-  --chatbox-tint-primary: #e5e7eb;
-  --chatbox-tint-secondary: #9ca3af;
-  --chatbox-tint-tertiary: #6b7280;
-  --chatbox-background-primary: #111827;
-  --chatbox-background-primary-hover: #1f2937;
-  --chatbox-background-secondary: #1f2937;
-  --chatbox-background-secondary-hover: #374151;
-  --chatbox-background-tertiary: #374151;
-  --chatbox-background-tertiary-hover: #4b5563;
-  --chatbox-border-primary: #374151;
-  --chatbox-border-secondary: #4b5563;
-}
-
+/*
+ * Body styling is intentionally left to Mantine. We previously hardcoded
+ * background-color and color here against our --chatbox-* variables, but
+ * those didn't follow Mantine's color scheme switching, leading to dark
+ * Mantine components rendered on a white body background. Letting Mantine
+ * fully own body styling keeps everything consistent.
+ *
+ * The dark-mode .dark class block was also removed because Mantine never
+ * applies that class — it uses [data-mantine-color-scheme] on <html>.
+ */
 body {
   margin: 0;
-  background-color: var(--chatbox-background-primary);
-  color: var(--chatbox-tint-primary);
 }
