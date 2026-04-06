@@ -12,6 +12,15 @@ import {
   resolveReport,
 } from './routes/admin'
 import { exchangeCode, generateExchangeCode, getMe, logout } from './routes/auth'
+import { getCatalog } from './routes/catalog'
+import {
+  addTeacherPlugin,
+  approveTeacherPlugin,
+  deployTeacherPlugin,
+  listTeacherPlugins,
+  removeTeacherPlugin,
+  revokeTeacherPlugin,
+} from './routes/teacher-plugins'
 import {
   getPluginDetail,
   getPluginImage,
@@ -81,6 +90,31 @@ export function buildRouter(): Router {
   router.post('/auth/exchange', (request, env) => exchangeCode(request, env))
   router.get('/auth/me', (request, env) => getMe(request, env))
   router.post('/auth/logout', (request, env) => logout(request, env))
+
+  // Teacher classroom plugin routes
+  router.get('/teachers/:teacherId/plugins', (request, env, params) =>
+    listTeacherPlugins(request, env, { teacherId: params.teacherId })
+  )
+  router.post('/teachers/:teacherId/plugins/:pluginId', (request, env, params) =>
+    addTeacherPlugin(request, env, { teacherId: params.teacherId, pluginId: params.pluginId })
+  )
+  router.put('/teachers/:teacherId/plugins/:pluginId/approve', (request, env, params) =>
+    approveTeacherPlugin(request, env, { teacherId: params.teacherId, pluginId: params.pluginId })
+  )
+  router.put('/teachers/:teacherId/plugins/:pluginId/deploy', (request, env, params) =>
+    deployTeacherPlugin(request, env, { teacherId: params.teacherId, pluginId: params.pluginId })
+  )
+  router.put('/teachers/:teacherId/plugins/:pluginId/revoke', (request, env, params) =>
+    revokeTeacherPlugin(request, env, { teacherId: params.teacherId, pluginId: params.pluginId })
+  )
+  router.delete('/teachers/:teacherId/plugins/:pluginId', (request, env, params) =>
+    removeTeacherPlugin(request, env, { teacherId: params.teacherId, pluginId: params.pluginId })
+  )
+
+  // Public student catalog endpoint
+  router.get('/catalog/:joinCode', (request, env, params) =>
+    getCatalog(request, env, { joinCode: params.joinCode })
+  )
 
   return router
 }
