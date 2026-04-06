@@ -1,0 +1,29 @@
+name = "chatbridge-marketplace"
+main = "worker/index.ts"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+ENVIRONMENT = "development"
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "marketplace-db"
+database_id = "placeholder-create-with-wrangler"
+
+# R2 Bucket
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "marketplace-assets"
+
+# Secrets (set via `wrangler secret put`):
+# - ADMIN_TOKEN
+# - SESSION_SECRET
+
+[dev]
+port = 8787
+
+# Scheduled cleanup (daily at 3am UTC)
+# [triggers]
+# crons = ["0 3 * * *"]
