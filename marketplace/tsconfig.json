@@ -14,7 +14,7 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "types": ["vite/client", "@cloudflare/workers-types"],
+    "types": ["vite/client", "@cloudflare/workers-types", "@testing-library/jest-dom"],
     "baseUrl": ".",
     "paths": {
       "@marketplace/*": ["./src/*"]
