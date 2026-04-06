@@ -13,7 +13,8 @@ export function PluginCard({ plugin }: PluginCardProps) {
     <Card
       component={Link}
       to={`/plugin/${encodeURIComponent(plugin.pluginId)}`}
-      shadow="sm"
+      className="plugin-card"
+      shadow="md"
       padding="md"
       radius="md"
       withBorder

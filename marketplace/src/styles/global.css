@@ -98,3 +98,26 @@
 body {
   margin: 0;
 }
+
+/*
+ * PluginCard hover lift. Pseudo-classes aren't expressible in inline styles,
+ * so the hover effect lives here and the component attaches `.plugin-card`.
+ * Uses Mantine's shadow tokens via CSS variables so light/dark would inherit
+ * automatically if we add dark mode later.
+ */
+.plugin-card {
+  transition:
+    box-shadow 180ms ease,
+    transform 180ms ease;
+  will-change: transform, box-shadow;
+}
+
+.plugin-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--mantine-shadow-xl);
+}
+
+.plugin-card:focus-visible {
+  outline: 2px solid var(--mantine-color-blue-5);
+  outline-offset: 2px;
+}
