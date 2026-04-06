@@ -3,6 +3,7 @@
  */
 import { asD1, createTestD1, loadSqlFile, type FakeD1 } from './d1-adapter'
 import { asR2Bucket, createTestR2, type FakeR2 } from './r2-adapter'
+import { authQueries } from '../../../worker/db/queries'
 import type { Env } from '../../../worker/types'
 
 const schemaSql = loadSqlFile('worker/db/schema.sql')
@@ -38,4 +39,18 @@ export function createExecutionContext(): ExecutionContext {
     passThroughOnException() {},
     props: {},
   } as unknown as ExecutionContext
+}
+
+/**
+ * Seed a session row and return a `Cookie: session=...` header value.
+ */
+export async function createSessionCookie(
+  harness: TestHarness,
+  teacherId: string,
+  opts: { expiresAt?: number } = {}
+): Promise<string> {
+  const sessionId = `test_session_${teacherId}_${Math.random().toString(36).slice(2, 10)}`
+  const expiresAt = opts.expiresAt ?? Date.now() + 8 * 60 * 60 * 1000
+  await authQueries.createSession(harness.env.DB, sessionId, teacherId, expiresAt)
+  return `session=${sessionId}`
 }
