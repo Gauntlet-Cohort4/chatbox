@@ -22,6 +22,7 @@ import {
   revokeTeacherPlugin,
 } from './routes/teacher-plugins'
 import {
+  getPluginBundle,
   getPluginDetail,
   getPluginImage,
   listCategories,
@@ -51,6 +52,9 @@ export function buildRouter(): Router {
   )
   router.get('/marketplace/plugins/:pluginId/image', (request, env, params) =>
     getPluginImage(request, env, { pluginId: params.pluginId })
+  )
+  router.get('/marketplace/plugins/:pluginId/bundle', (request, env, params) =>
+    getPluginBundle(request, env, { pluginId: params.pluginId })
   )
   router.post('/marketplace/plugins', (request, env) => submitPlugin(request, env))
   router.get('/marketplace/categories', (request, env) => listCategories(request, env))
