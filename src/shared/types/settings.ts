@@ -277,6 +277,15 @@ const PluginSettingsSchema = z.object({
     refreshToken: z.string().optional(),
     expiresAt: z.number().optional(),
   })).default({}),
+  // ChatBridge Marketplace integration (Appendix A)
+  marketplaceApiUrl: z.string().url().optional(),
+  marketplaceWebUrl: z.string().url().optional(),
+  // Teacher-side: set after registering with the marketplace
+  marketplaceTeacherId: z.string().optional(),
+  marketplaceTeacherApiToken: z.string().optional(),
+  marketplaceTeacherJoinCode: z.string().optional(),
+  // Student-side: set via the join-code entry UI
+  marketplaceStudentJoinCode: z.string().optional(),
 })
 
 export enum Theme {
