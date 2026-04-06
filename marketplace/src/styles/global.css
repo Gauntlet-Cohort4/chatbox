@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Import ChatBridge design tokens (--chatbox-* CSS variables).
+ * These are defined by the main app's theme system and referenced
+ * by Tailwind via the shared config. For the standalone marketplace,
+ * we provide sensible defaults below.
+ */
+
+:root {
+  /* Tint */
+  --chatbox-tint-primary: #1a1a2e;
+  --chatbox-tint-secondary: #4a4a6a;
+  --chatbox-tint-tertiary: #8a8aaa;
+  --chatbox-tint-white: #ffffff;
+  --chatbox-tint-black: #000000;
+  --chatbox-tint-gray: #6b7280;
+  --chatbox-tint-disabled: #9ca3af;
+  --chatbox-tint-brand: #3b82f6;
+  --chatbox-tint-placeholder: #9ca3af;
+  --chatbox-tint-error: #ef4444;
+  --chatbox-tint-error-disabled: #fca5a5;
+  --chatbox-tint-warning: #f59e0b;
+  --chatbox-tint-success: #10b981;
+
+  /* Borders */
+  --chatbox-border-primary: #e5e7eb;
+  --chatbox-border-secondary: #d1d5db;
+  --chatbox-border-warning: #fbbf24;
+  --chatbox-border-error: #f87171;
+  --chatbox-border-success: #34d399;
+  --chatbox-border-brand: #60a5fa;
+
+  /* Backgrounds */
+  --chatbox-background-primary: #ffffff;
+  --chatbox-background-primary-hover: #f9fafb;
+  --chatbox-background-secondary: #f3f4f6;
+  --chatbox-background-secondary-hover: #e5e7eb;
+  --chatbox-background-tertiary: #e5e7eb;
+  --chatbox-background-tertiary-hover: #d1d5db;
+  --chatbox-background-disabled: #f3f4f6;
+  --chatbox-background-brand-primary: #3b82f6;
+  --chatbox-background-brand-primary-hover: #2563eb;
+  --chatbox-background-brand-secondary: #eff6ff;
+  --chatbox-background-brand-secondary-hover: #dbeafe;
+  --chatbox-background-gray-primary: #6b7280;
+  --chatbox-background-gray-primary-hover: #4b5563;
+  --chatbox-background-gray-secondary: #f3f4f6;
+  --chatbox-background-gray-secondary-hover: #e5e7eb;
+  --chatbox-background-success-primary: #10b981;
+  --chatbox-background-success-primary-hover: #059669;
+  --chatbox-background-success-secondary: #ecfdf5;
+  --chatbox-background-success-secondary-hover: #d1fae5;
+  --chatbox-background-error-primary: #ef4444;
+  --chatbox-background-error-primary-hover: #dc2626;
+  --chatbox-background-error-secondary: #fef2f2;
+  --chatbox-background-error-secondary-hover: #fee2e2;
+  --chatbox-background-warning-primary: #f59e0b;
+  --chatbox-background-warning-primary-hover: #d97706;
+  --chatbox-background-warning-secondary: #fffbeb;
+  --chatbox-background-warning-secondary-hover: #fef3c7;
+  --chatbox-background-mask-overlay: rgba(0, 0, 0, 0.5);
+  --chatbox-background-mask-lighten: rgba(255, 255, 255, 0.8);
+
+  /* Spacing */
+  --chatbox-spacing-none: 0;
+  --chatbox-spacing-3xs: 2px;
+  --chatbox-spacing-xxs: 4px;
+  --chatbox-spacing-xs: 8px;
+  --chatbox-spacing-sm: 12px;
+  --chatbox-spacing-md: 16px;
+  --chatbox-spacing-lg: 24px;
+  --chatbox-spacing-xl: 32px;
+  --chatbox-spacing-xxl: 48px;
+
+  /* Radius */
+  --chatbox-radius-none: 0;
+  --chatbox-radius-xs: 2px;
+  --chatbox-radius-sm: 4px;
+  --chatbox-radius-md: 8px;
+  --chatbox-radius-lg: 12px;
+  --chatbox-radius-xl: 16px;
+  --chatbox-radius-xxl: 24px;
+}
+
+/* Dark mode defaults */
+.dark {
+  --chatbox-tint-primary: #e5e7eb;
+  --chatbox-tint-secondary: #9ca3af;
+  --chatbox-tint-tertiary: #6b7280;
+  --chatbox-background-primary: #111827;
+  --chatbox-background-primary-hover: #1f2937;
+  --chatbox-background-secondary: #1f2937;
+  --chatbox-background-secondary-hover: #374151;
+  --chatbox-background-tertiary: #374151;
+  --chatbox-background-tertiary-hover: #4b5563;
+  --chatbox-border-primary: #374151;
+  --chatbox-border-secondary: #4b5563;
+}
+
+body {
+  margin: 0;
+  background-color: var(--chatbox-background-primary);
+  color: var(--chatbox-tint-primary);
+}
