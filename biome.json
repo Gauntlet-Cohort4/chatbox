@@ -6,7 +6,8 @@
     "useIgnoreFile": true
   },
   "files": {
-    "ignoreUnknown": true
+    "ignoreUnknown": true,
+    "includes": ["**", "!.claude/worktrees/**", "!node_modules/**", "!dist/**", "!out/**"]
   },
   "formatter": {
     "enabled": true,
@@ -22,6 +23,9 @@
     "useEditorconfig": true,
     "includes": [
       "src/**",
+      "marketplace/src/**",
+      "marketplace/worker/**",
+      "marketplace/tests/**",
       "test/integration/**/*.ts",
       "test/e2e/**/*.ts",
       "!src/main/mcp/shell-env.cjs",
@@ -64,6 +68,9 @@
     },
     "includes": [
       "src/**",
+      "marketplace/src/**",
+      "marketplace/worker/**",
+      "marketplace/tests/**",
       "test/integration/**/*.ts",
       "test/e2e/**/*.ts",
       "!src/main/mcp/shell-env.cjs",
