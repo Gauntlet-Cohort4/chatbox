@@ -5,12 +5,21 @@ import { handlePreflight, withCors } from './middleware/cors'
 import { notFound, serverError } from './lib/responses'
 import { Router } from './router'
 import {
+  approveSubmission,
+  listPendingSubmissions,
+  listReports,
+  rejectSubmission,
+  resolveReport,
+} from './routes/admin'
+import {
   getPluginDetail,
   getPluginImage,
   listCategories,
   listPlugins,
   submitPlugin,
 } from './routes/marketplace'
+import { createReport } from './routes/reports'
+import { createReview, listReviews, updateReview } from './routes/reviews'
 import type { Env } from './types'
 
 export function buildRouter(): Router {
@@ -33,6 +42,35 @@ export function buildRouter(): Router {
   )
   router.post('/marketplace/plugins', (request, env) => submitPlugin(request, env))
   router.get('/marketplace/categories', (request, env) => listCategories(request, env))
+
+  // Review routes
+  router.get('/marketplace/plugins/:pluginId/reviews', (request, env, params) =>
+    listReviews(request, env, { pluginId: params.pluginId })
+  )
+  router.post('/marketplace/plugins/:pluginId/reviews', (request, env, params) =>
+    createReview(request, env, { pluginId: params.pluginId })
+  )
+  router.put('/marketplace/plugins/:pluginId/reviews', (request, env, params) =>
+    updateReview(request, env, { pluginId: params.pluginId })
+  )
+
+  // Report routes
+  router.post('/marketplace/plugins/:pluginId/reports', (request, env, params) =>
+    createReport(request, env, { pluginId: params.pluginId })
+  )
+
+  // Admin routes
+  router.get('/admin/submissions', (request, env) => listPendingSubmissions(request, env))
+  router.put('/admin/submissions/:pluginId/approve', (request, env, params) =>
+    approveSubmission(request, env, { pluginId: params.pluginId })
+  )
+  router.put('/admin/submissions/:pluginId/reject', (request, env, params) =>
+    rejectSubmission(request, env, { pluginId: params.pluginId })
+  )
+  router.get('/admin/reports', (request, env) => listReports(request, env))
+  router.put('/admin/reports/:reportId', (request, env, params) =>
+    resolveReport(request, env, { reportId: params.reportId })
+  )
 
   return router
 }
